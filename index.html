@@ -3,22 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UPAN - Mode Offline</title>
+    <title>UPAN - Registre d'Allaus</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; max-width: 400px; margin: auto; }
+        body { font-family: Arial, sans-serif; padding: 15px; max-width: 500px; margin: auto; }
+        
+        /* Estils del mapa */
+        #map { height: 300px; width: 100%; border-radius: 8px; margin-bottom: 15px; border: 2px solid #ddd; z-index: 1; }
+        
         .camp { margin-bottom: 15px; }
-        input, select { width: 100%; padding: 10px; box-sizing: border-box; }
-        .btn { padding: 15px; font-size: 16px; border: none; border-radius: 8px; width: 100%; cursor: pointer; color: white; font-weight: bold; margin-bottom: 10px;}
+        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 5px; border: 1px solid #ccc; }
+        
+        .btn { padding: 15px; font-size: 16px; border: none; border-radius: 8px; width: 100%; cursor: pointer; color: white; font-weight: bold; margin-bottom: 10px; }
+        .btn-gps { background-color: #3498db; }
         .btn-guardar { background-color: #f39c12; }
-        .btn-sync { background-color: #2e7d32; display: none; } /* Amagat per defecte */
-        .caixa-llista { margin-top: 20px; padding: 15px; background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; }
-        .registre { border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 5px; font-size: 14px; }
+        
+        #coords-info { font-size: 12px; color: #555; text-align: center; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
-    <h2>🏔️ Nova Observació</h2>
-    <p>Sense cobertura? Cap problema. Es guardarà al telèfon.</p>
+    <h2>🏔️ Reportar Allau (UPAN)</h2>
+
+    <div id="map"></div>
+    
+    <button id="btn-gps" class="btn btn-gps">📍 Capturar la meva ubicació</button>
+    <div id="coords-info">Coordenades no capturades encara.</div>
 
     <div class="camp">
         <label>Nom del sector / Lloc:</label>
@@ -33,108 +46,87 @@
         </select>
     </div>
 
-    <button id="btn-guardar" class="btn btn-guardar">💾 Guardar al Telèfon</button>
-
-    <div class="caixa-llista">
-        <h3>Pendents d'enviar: <span id="comptador">0</span></h3>
-        <div id="llista-registres"></div>
-        <button id="btn-sync" class="btn btn-sync">📡 Sincronitzar amb Servidor</button>
-    </div>
+    <button id="btn-guardar" class="btn btn-guardar">💾 Guardar Dades Temporals</button>
 
     <script>
-        // Referències als elements de la pantalla
-        const btnGuardar = document.getElementById('btn-guardar');
-        const btnSync = document.getElementById('btn-sync');
-        const llistaRegistres = document.getElementById('llista-registres');
-        const comptador = document.getElementById('comptador');
+        // Variables globals per guardar les coordenades
+        let latitudActual = null;
+        let longitudActual = null;
 
-        // Funció que llegeix la memòria del telèfon per veure si hi ha dades guardades
-        function carregarDadesLocals() {
-            // Llegim de localStorage. Si no hi ha res, creem un array buit []
-            const dades = JSON.parse(localStorage.getItem('allaus_pendents')) || [];
+        // 1. INICIALITZAR EL MAPA
+        // Centrem per defecte al mig dels Pirineus catalans amb un zoom llunyà
+        const map = L.map('map').setView([42.5, 1.5], 8);
+
+        // Afegim la capa Topogràfica de l'ICGC
+        L.tileLayer('https://geoserveis.icgc.cat/icc_mapesmultibase/noutopo/wmts/topo/GRID3857/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© ICGC'
+        }).addTo(map);
+
+        // Variable per a la xinxeta (marcador)
+        let marcador;
+
+        // 2. FUNCIÓ PER CAPTURAR EL GPS
+        document.getElementById('btn-gps').addEventListener('click', () => {
+            const infoDiv = document.getElementById('coords-info');
             
-            // Actualitzem l'HTML
-            llistaRegistres.innerHTML = '';
-            dades.forEach((allau, index) => {
-                llistaRegistres.innerHTML += `
-                    <div class="registre">
-                        <strong>#${index + 1} - ${allau.lloc}</strong> (Mida: ${allau.mida})<br>
-                        <small>Data: ${allau.data}</small>
-                    </div>
-                `;
-            });
-
-            // Actualitzem comptador i mostrem/amaguem el botó de sincronitzar
-            comptador.innerText = dades.length;
-            if (dades.length > 0) {
-                btnSync.style.display = 'block';
-            } else {
-                btnSync.style.display = 'none';
-                llistaRegistres.innerHTML = '<p style="color:gray; font-size:12px;">Cap allau pendent.</p>';
-            }
-        }
-
-        // Acció de GUARDAR AL TELÈFON (Mode Offline)
-        btnGuardar.addEventListener('click', () => {
-            const lloc = document.getElementById('input-lloc').value;
-            const mida = document.getElementById('input-mida').value;
-
-            if (lloc === "") { alert("Escriu un lloc!"); return; }
-
-            // Creem l'objecte amb la informació
-            const novaAllau = {
-                lloc: lloc,
-                mida: mida,
-                data: new Date().toLocaleString()
-            };
-
-            // 1. Llegim el que ja hi ha guardat
-            const dades = JSON.parse(localStorage.getItem('allaus_pendents')) || [];
-            // 2. Afegim la nova allau a la llista
-            dades.push(novaAllau);
-            // 3. Tornem a guardar tota la llista a la memòria del mòbil
-            localStorage.setItem('allaus_pendents', JSON.stringify(dades));
-
-            // Netegem el formulari i refresquem la pantalla
-            document.getElementById('input-lloc').value = "";
-            carregarDadesLocals();
-            alert("✅ Guardat correctament a la memòria del telèfon.");
-        });
-
-        // Acció de SINCRONITZAR (Simulació d'enviament al servidor)
-        btnSync.addEventListener('click', () => {
-            // Comprovem si hi ha internet (nadiu de JavaScript)
-            if (!navigator.onLine) {
-                alert("❌ No tens connexió a Internet ara mateix. Espera a tenir cobertura.");
+            if (!navigator.geolocation) {
+                infoDiv.innerHTML = "<span style='color:red;'>El teu navegador no suporta GPS.</span>";
                 return;
             }
 
-            btnSync.innerText = "⏳ Enviant...";
-            
-            // Simulem que triga 2 segons en enviar a la base de dades (PostGIS)
-            setTimeout(() => {
-                // Quan el servidor (PostGIS) ens diu "OK", esborrem la memòria del telèfon
-                localStorage.removeItem('allaus_pendents');
-                carregarDadesLocals();
-                btnSync.innerText = "📡 Sincronitzar amb Servidor";
-                alert("🚀 Dades enviades a la UPAN amb èxit! La memòria local s'ha buidat.");
-            }, 2000);
+            infoDiv.innerText = "Buscant satèl·lits... 🛰️";
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    // Guardem les coordenades a les variables globals
+                    latitudActual = position.coords.latitude;
+                    longitudActual = position.coords.longitude;
+                    const precisio = position.coords.accuracy;
+
+                    // Mostrem el text
+                    infoDiv.innerHTML = `✅ Precisió: ±${Math.round(precisio)} metres (Lat: ${latitudActual.toFixed(5)}, Lon: ${longitudActual.toFixed(5)})`;
+
+                    // Movem el mapa a la ubicació de l'usuari amb zoom proper (nivell 15)
+                    map.setView([latitudActual, longitudActual], 15);
+
+                    // Si ja hi havia una xinxeta d'abans, l'esborrem
+                    if (marcador) {
+                        map.removeLayer(marcador);
+                    }
+
+                    // Afegim la nova xinxeta
+                    marcador = L.marker([latitudActual, longitudActual]).addTo(map);
+                },
+                (error) => {
+                    infoDiv.innerHTML = `<span style='color:red;'>Error de GPS: Verifica que tens la ubicació activada.</span>`;
+                },
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
         });
 
-        // Quan s'obre la pàgina, carreguem les dades si n'hi ha de dies anteriors
-        carregarDadesLocals();
-        if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js')
-            .then(registration => {
-              console.log('Service Worker instal·lat amb èxit:', registration.scope);
-            })
-            .catch(error => {
-              console.log('Error en instal·lar el Service Worker:', error);
-            });
+        // 3. FUNCIÓ DE GUARDAR (De moment simulem un avís)
+        document.getElementById('btn-guardar').addEventListener('click', () => {
+            const lloc = document.getElementById('input-lloc').value;
+            
+            if (latitudActual === null) {
+                alert("Si us plau, captura primer la teva ubicació amb el botó blau.");
+                return;
+            }
+            if (lloc === "") {
+                alert("Si us plau, posa un nom al lloc.");
+                return;
+            }
+
+            alert(`Dades llistes per guardar!\nLloc: ${lloc}\nCoords: ${latitudActual}, ${longitudActual}`);
         });
-      }
+
+        // Codi per registrar el Service Worker que vam fer abans
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js');
+            });
+        }
     </script>
 </body>
-
 </html>
