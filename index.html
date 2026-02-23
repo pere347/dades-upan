@@ -18,7 +18,11 @@
         
         .btn { padding: 15px; font-size: 16px; border: none; border-radius: 8px; width: 100%; cursor: pointer; color: white; font-weight: bold; margin-bottom: 10px; }
         .btn-gps { background-color: #3498db; }
-        .btn-foto { background-color: #9b59b6; display: inline-block; text-align: center; }
+        .btn-foto { background-color: #9b59b6; 
+            display: block; /* Força l'etiqueta a comportar-se com un bloc */
+            box-sizing: border-box; /* Evita que surti pels costats */
+            text-align: center; /* Centra la icona i el text */
+        }
         .btn-guardar { background-color: #f39c12; }
         .btn-sync { background-color: #2e7d32; display: none; }
         
@@ -211,3 +215,4 @@
     </script>
 </body>
 </html>
+
