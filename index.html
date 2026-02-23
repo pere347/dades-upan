@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPAN - Mode Offline</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 400px; margin: auto; }
+        .camp { margin-bottom: 15px; }
+        input, select { width: 100%; padding: 10px; box-sizing: border-box; }
+        .btn { padding: 15px; font-size: 16px; border: none; border-radius: 8px; width: 100%; cursor: pointer; color: white; font-weight: bold; margin-bottom: 10px;}
+        .btn-guardar { background-color: #f39c12; }
+        .btn-sync { background-color: #2e7d32; display: none; } /* Amagat per defecte */
+        .caixa-llista { margin-top: 20px; padding: 15px; background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; }
+        .registre { border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 5px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <h2>🏔️ Nova Observació</h2>
+    <p>Sense cobertura? Cap problema. Es guardarà al telèfon.</p>
+
+    <div class="camp">
+        <label>Nom del sector / Lloc:</label>
+        <input type="text" id="input-lloc" placeholder="Ex: Pala d'Eixe">
+    </div>
+    <div class="camp">
+        <label>Mida de l'allau:</label>
+        <select id="input-mida">
+            <option value="D1">D1 (Petita)</option>
+            <option value="D2">D2 (Mitjana)</option>
+            <option value="D3">D3 (Gran)</option>
+        </select>
+    </div>
+
+    <button id="btn-guardar" class="btn btn-guardar">💾 Guardar al Telèfon</button>
+
+    <div class="caixa-llista">
+        <h3>Pendents d'enviar: <span id="comptador">0</span></h3>
+        <div id="llista-registres"></div>
+        <button id="btn-sync" class="btn btn-sync">📡 Sincronitzar amb Servidor</button>
+    </div>
+
+    <script>
+        // Referències als elements de la pantalla
+        const btnGuardar = document.getElementById('btn-guardar');
+        const btnSync = document.getElementById('btn-sync');
+        const llistaRegistres = document.getElementById('llista-registres');
+        const comptador = document.getElementById('comptador');
+
+        // Funció que llegeix la memòria del telèfon per veure si hi ha dades guardades
+        function carregarDadesLocals() {
+            // Llegim de localStorage. Si no hi ha res, creem un array buit []
+            const dades = JSON.parse(localStorage.getItem('allaus_pendents')) || [];
+            
+            // Actualitzem l'HTML
+            llistaRegistres.innerHTML = '';
+            dades.forEach((allau, index) => {
+                llistaRegistres.innerHTML += `
+                    <div class="registre">
+                        <strong>#${index + 1} - ${allau.lloc}</strong> (Mida: ${allau.mida})<br>
+                        <small>Data: ${allau.data}</small>
+                    </div>
+                `;
+            });
+
+            // Actualitzem comptador i mostrem/amaguem el botó de sincronitzar
+            comptador.innerText = dades.length;
+            if (dades.length > 0) {
+                btnSync.style.display = 'block';
+            } else {
+                btnSync.style.display = 'none';
+                llistaRegistres.innerHTML = '<p style="color:gray; font-size:12px;">Cap allau pendent.</p>';
+            }
+        }
+
+        // Acció de GUARDAR AL TELÈFON (Mode Offline)
+        btnGuardar.addEventListener('click', () => {
+            const lloc = document.getElementById('input-lloc').value;
+            const mida = document.getElementById('input-mida').value;
+
+            if (lloc === "") { alert("Escriu un lloc!"); return; }
+
+            // Creem l'objecte amb la informació
+            const novaAllau = {
+                lloc: lloc,
+                mida: mida,
+                data: new Date().toLocaleString()
+            };
+
+            // 1. Llegim el que ja hi ha guardat
+            const dades = JSON.parse(localStorage.getItem('allaus_pendents')) || [];
+            // 2. Afegim la nova allau a la llista
+            dades.push(novaAllau);
+            // 3. Tornem a guardar tota la llista a la memòria del mòbil
+            localStorage.setItem('allaus_pendents', JSON.stringify(dades));
+
+            // Netegem el formulari i refresquem la pantalla
+            document.getElementById('input-lloc').value = "";
+            carregarDadesLocals();
+            alert("✅ Guardat correctament a la memòria del telèfon.");
+        });
+
+        // Acció de SINCRONITZAR (Simulació d'enviament al servidor)
+        btnSync.addEventListener('click', () => {
+            // Comprovem si hi ha internet (nadiu de JavaScript)
+            if (!navigator.onLine) {
+                alert("❌ No tens connexió a Internet ara mateix. Espera a tenir cobertura.");
+                return;
+            }
+
+            btnSync.innerText = "⏳ Enviant...";
+            
+            // Simulem que triga 2 segons en enviar a la base de dades (PostGIS)
+            setTimeout(() => {
+                // Quan el servidor (PostGIS) ens diu "OK", esborrem la memòria del telèfon
+                localStorage.removeItem('allaus_pendents');
+                carregarDadesLocals();
+                btnSync.innerText = "📡 Sincronitzar amb Servidor";
+                alert("🚀 Dades enviades a la UPAN amb èxit! La memòria local s'ha buidat.");
+            }, 2000);
+        });
+
+        // Quan s'obre la pàgina, carreguem les dades si n'hi ha de dies anteriors
+        carregarDadesLocals();
+    </script>
+</body>
+</html>
