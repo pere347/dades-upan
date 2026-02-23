@@ -1,10 +1,11 @@
-const CACHE_NAME = 'upan-cache-v3';
+const CACHE_NAME = 'upan-cache-v4';
 
 const urlsToCache = [
   './',
   './index.html',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js' // La nova llibreria offline!
 ];
 
 // 1. INSTAL·LACIÓ
