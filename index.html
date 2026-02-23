@@ -14,22 +14,24 @@
         body { font-family: Arial, sans-serif; padding: 15px; max-width: 500px; margin: auto; }
         #map { height: 300px; width: 100%; border-radius: 8px; margin-bottom: 15px; border: 2px solid #ddd; z-index: 1; }
         .camp { margin-bottom: 15px; }
-        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 5px; border: 1px solid #ccc; }
+        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 5px; border: 1px solid #ccc; background-color: white; }
         
         .btn { padding: 15px; font-size: 16px; border: none; border-radius: 8px; width: 100%; cursor: pointer; color: white; font-weight: bold; margin-bottom: 10px; }
         .btn-gps { background-color: #3498db; }
-        .btn-foto { background-color: #9b59b6; 
-            display: block; /* Força l'etiqueta a comportar-se com un bloc */
-            box-sizing: border-box; /* Evita que surti pels costats */
-            text-align: center; /* Centra la icona i el text */
-        }
         .btn-guardar { background-color: #f39c12; }
         .btn-sync { background-color: #2e7d32; display: none; }
+        
+        /* Botó de la càmera (ajustat com els altres) */
+        .btn-foto { 
+            background-color: #9b59b6; 
+            display: block; 
+            box-sizing: border-box; 
+            text-align: center; 
+        }
         
         #coords-info { font-size: 12px; color: #555; text-align: center; margin-bottom: 15px; }
         #preview-foto { display: none; width: 100%; margin-top: 10px; border-radius: 8px; border: 2px dashed #9b59b6; }
         
-        /* Ocultem l'input de tipus arxiu clàssic per posar-hi un botó bonic */
         input[type="file"] { display: none; }
         
         .caixa-llista { margin-top: 20px; padding: 15px; background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; }
@@ -49,12 +51,26 @@
         <label>Nom del sector / Lloc:</label>
         <input type="text" id="input-lloc" placeholder="Ex: Pala d'Eixe">
     </div>
+    
     <div class="camp">
         <label>Mida de l'allau:</label>
         <select id="input-mida">
             <option value="D1">D1 (Petita)</option>
             <option value="D2">D2 (Mitjana)</option>
             <option value="D3">D3 (Gran)</option>
+            <option value="D4">D4 (Molt gran)</option>
+            <option value="D5">D5 (Extrema)</option>
+        </select>
+    </div>
+
+    <div class="camp">
+        <label>Tipus d'allau:</label>
+        <select id="input-tipus">
+            <option value="Placa de vent">Placa de vent</option>
+            <option value="Lliscament basal">Lliscament basal</option>
+            <option value="Neu humida">Neu humida</option>
+            <option value="Neu recent">Neu recent</option>
+            <option value="Neu ventada">Neu ventada</option>
         </select>
     </div>
 
@@ -75,7 +91,7 @@
     <script>
         let latitudActual = null;
         let longitudActual = null;
-        let fotoBase64 = null; // Guardarà la imatge
+        let fotoBase64 = null; 
         let marcador;
 
         const map = L.map('map').setView([42.5, 1.5], 8);
@@ -106,16 +122,13 @@
             );
         });
 
-        // --- GESTIÓ DE LA FOTOGRAFIA ---
+        // --- FOTOGRAFIA ---
         document.getElementById('input-foto').addEventListener('change', function(event) {
             const file = event.target.files[0];
             if (file) {
-                // Llegim l'arxiu i el convertim a un text llarg (Base64) per poder-lo guardar
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    fotoBase64 = e.target.result; // Aquest és el codi de la imatge
-                    
-                    // La mostrem a la pantalla perquè l'observador la vegi
+                    fotoBase64 = e.target.result; 
                     const preview = document.getElementById('preview-foto');
                     preview.src = fotoBase64;
                     preview.style.display = 'block';
@@ -124,26 +137,25 @@
             }
         });
 
-        // --- LÒGICA OFFLINE (AMB LOCALFORAGE / INDEXEDDB) ---
+        // --- LÒGICA OFFLINE ---
         const llistaRegistres = document.getElementById('llista-registres');
         const comptador = document.getElementById('comptador');
         const btnSync = document.getElementById('btn-sync');
 
-        // Canviem a 'async' perquè treballar amb fotos triga uns mil·lisegons
         async function carregarDadesLocals() {
-            // Ara demanem les dades a localforage (IndexedDB)
             const dades = await localforage.getItem('allaus_pendents') || [];
             llistaRegistres.innerHTML = '';
             
             dades.forEach((allau, index) => {
-                // Afegim la miniatura de la foto a la llista si existeix
                 const imgTag = allau.foto ? `<img src="${allau.foto}" alt="Miniatura">` : '';
                 
+                // Ara mostrem el Tipus al costat de la Mida
                 llistaRegistres.innerHTML += `
                     <div class="registre">
                         ${imgTag}
                         <div>
-                            <strong>#${index + 1} - ${allau.lloc}</strong> (Mida: ${allau.mida})<br>
+                            <strong>#${index + 1} - ${allau.lloc}</strong><br>
+                            <small>Mida: ${allau.mida} | Tipus: ${allau.tipus}</small><br>
                             <small>Coords: ${allau.lat.toFixed(4)}, ${allau.lon.toFixed(4)}</small>
                         </div>
                     </div>
@@ -162,33 +174,40 @@
         document.getElementById('btn-guardar').addEventListener('click', async () => {
             const lloc = document.getElementById('input-lloc').value;
             const mida = document.getElementById('input-mida').value;
+            const tipus = document.getElementById('input-tipus').value; // Llegim el nou camp
 
             if (latitudActual === null) { alert("Si us plau, captura primer la ubicació."); return; }
             if (lloc === "") { alert("Escriu el nom del sector."); return; }
             if (fotoBase64 === null) { alert("Si us plau, fes una fotografia de l'allau."); return; }
 
+            // Afegim el tipus a l'objecte que guardarem
             const novaAllau = {
                 lloc: lloc,
                 mida: mida,
+                tipus: tipus,
                 lat: latitudActual,
                 lon: longitudActual,
-                foto: fotoBase64, // Guardem tota la imatge!
+                foto: fotoBase64,
                 data: new Date().toLocaleString()
             };
 
             const dades = await localforage.getItem('allaus_pendents') || [];
             dades.push(novaAllau);
-            await localforage.setItem('allaus_pendents', dades); // Ho desem a IndexedDB
+            await localforage.setItem('allaus_pendents', dades); 
 
             // Netegem el formulari
             document.getElementById('input-lloc').value = "";
+            // Tornem els desplegables al primer valor per defecte
+            document.getElementById('input-mida').selectedIndex = 0;
+            document.getElementById('input-tipus').selectedIndex = 0;
+            
             latitudActual = null; longitudActual = null; fotoBase64 = null;
             document.getElementById('coords-info').innerText = "Coordenades no capturades encara.";
             document.getElementById('preview-foto').style.display = 'none';
             if (marcador) map.removeLayer(marcador);
             
             carregarDadesLocals();
-            alert("✅ Guardat al telèfon amb foto inclosa!");
+            alert("✅ Guardat al telèfon amb èxit!");
         });
 
         // --- SINCRONITZAR ---
@@ -200,11 +219,10 @@
                 await localforage.removeItem('allaus_pendents');
                 carregarDadesLocals();
                 btnSync.innerText = "📡 Sincronitzar amb Servidor";
-                alert("🚀 Dades i imatges enviades a la UPAN!");
+                alert("🚀 Dades enviades a la UPAN!");
             }, 1500);
         });
 
-        // Arranquem
         carregarDadesLocals();
 
         if ('serviceWorker' in navigator) {
@@ -215,4 +233,3 @@
     </script>
 </body>
 </html>
-
