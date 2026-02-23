@@ -7,25 +7,30 @@
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
 
     <style>
         body { font-family: Arial, sans-serif; padding: 15px; max-width: 500px; margin: auto; }
-        
         #map { height: 300px; width: 100%; border-radius: 8px; margin-bottom: 15px; border: 2px solid #ddd; z-index: 1; }
-        
         .camp { margin-bottom: 15px; }
         input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 5px; border: 1px solid #ccc; }
         
         .btn { padding: 15px; font-size: 16px; border: none; border-radius: 8px; width: 100%; cursor: pointer; color: white; font-weight: bold; margin-bottom: 10px; }
         .btn-gps { background-color: #3498db; }
+        .btn-foto { background-color: #9b59b6; display: inline-block; text-align: center; }
         .btn-guardar { background-color: #f39c12; }
         .btn-sync { background-color: #2e7d32; display: none; }
         
         #coords-info { font-size: 12px; color: #555; text-align: center; margin-bottom: 15px; }
+        #preview-foto { display: none; width: 100%; margin-top: 10px; border-radius: 8px; border: 2px dashed #9b59b6; }
         
-        /* Estils de la llista de pendents */
+        /* Ocultem l'input de tipus arxiu clàssic per posar-hi un botó bonic */
+        input[type="file"] { display: none; }
+        
         .caixa-llista { margin-top: 20px; padding: 15px; background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; }
-        .registre { border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 5px; font-size: 14px; }
+        .registre { border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 10px; font-size: 14px; display: flex; align-items: center; gap: 15px; }
+        .registre img { width: 60px; height: 60px; object-fit: cover; border-radius: 5px; border: 1px solid #ccc; }
     </style>
 </head>
 <body>
@@ -49,6 +54,12 @@
         </select>
     </div>
 
+    <div class="camp">
+        <label class="btn btn-foto" for="input-foto">📷 Fer Fotografia</label>
+        <input type="file" id="input-foto" accept="image/*" capture="environment">
+        <img id="preview-foto" src="" alt="Previsualització">
+    </div>
+
     <button id="btn-guardar" class="btn btn-guardar">💾 Guardar al Telèfon (Offline)</button>
 
     <div class="caixa-llista">
@@ -58,12 +69,11 @@
     </div>
 
     <script>
-        // Variables globals
         let latitudActual = null;
         let longitudActual = null;
+        let fotoBase64 = null; // Guardarà la imatge
         let marcador;
 
-        // 1. INICIALITZAR EL MAPA
         const map = L.map('map').setView([42.5, 1.5], 8);
         L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/topografic/MON3857NW/{z}/{x}/{y}.png', {
             maxZoom: 19,
@@ -72,115 +82,127 @@
 
         setTimeout(() => { map.invalidateSize(); }, 500);
 
-        // 2. FUNCIÓ PER CAPTURAR EL GPS
+        // --- GPS ---
         document.getElementById('btn-gps').addEventListener('click', () => {
             const infoDiv = document.getElementById('coords-info');
-            if (!navigator.geolocation) {
-                infoDiv.innerHTML = "<span style='color:red;'>Navegador no suportat.</span>";
-                return;
-            }
-            infoDiv.innerText = "Buscant satèl·lits... 🛰️ (Pot trigar sense internet)";
+            if (!navigator.geolocation) return;
+            infoDiv.innerText = "Buscant satèl·lits... 🛰️";
 
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     latitudActual = position.coords.latitude;
                     longitudActual = position.coords.longitude;
-                    
                     infoDiv.innerHTML = `✅ Lat: ${latitudActual.toFixed(5)}, Lon: ${longitudActual.toFixed(5)}`;
                     map.setView([latitudActual, longitudActual], 15);
-
                     if (marcador) map.removeLayer(marcador);
                     marcador = L.marker([latitudActual, longitudActual]).addTo(map);
                 },
-                (error) => {
-                    infoDiv.innerHTML = `<span style='color:red;'>Error de GPS.</span>`;
-                },
+                (error) => { infoDiv.innerHTML = `<span style='color:red;'>Error de GPS.</span>`; },
                 { enableHighAccuracy: true, timeout: 60000, maximumAge: 0 }
             );
         });
 
-        // ==========================================
-        // LÒGICA OFFLINE (LOCALSTORAGE) RECUPERADA
-        // ==========================================
+        // --- GESTIÓ DE LA FOTOGRAFIA ---
+        document.getElementById('input-foto').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // Llegim l'arxiu i el convertim a un text llarg (Base64) per poder-lo guardar
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    fotoBase64 = e.target.result; // Aquest és el codi de la imatge
+                    
+                    // La mostrem a la pantalla perquè l'observador la vegi
+                    const preview = document.getElementById('preview-foto');
+                    preview.src = fotoBase64;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // --- LÒGICA OFFLINE (AMB LOCALFORAGE / INDEXEDDB) ---
         const llistaRegistres = document.getElementById('llista-registres');
         const comptador = document.getElementById('comptador');
         const btnSync = document.getElementById('btn-sync');
 
-        function carregarDadesLocals() {
-            const dades = JSON.parse(localStorage.getItem('allaus_pendents')) || [];
+        // Canviem a 'async' perquè treballar amb fotos triga uns mil·lisegons
+        async function carregarDadesLocals() {
+            // Ara demanem les dades a localforage (IndexedDB)
+            const dades = await localforage.getItem('allaus_pendents') || [];
             llistaRegistres.innerHTML = '';
             
             dades.forEach((allau, index) => {
+                // Afegim la miniatura de la foto a la llista si existeix
+                const imgTag = allau.foto ? `<img src="${allau.foto}" alt="Miniatura">` : '';
+                
                 llistaRegistres.innerHTML += `
                     <div class="registre">
-                        <strong>#${index + 1} - ${allau.lloc}</strong> (Mida: ${allau.mida})<br>
-                        <small>Coords: ${allau.lat.toFixed(4)}, ${allau.lon.toFixed(4)}</small>
+                        ${imgTag}
+                        <div>
+                            <strong>#${index + 1} - ${allau.lloc}</strong> (Mida: ${allau.mida})<br>
+                            <small>Coords: ${allau.lat.toFixed(4)}, ${allau.lon.toFixed(4)}</small>
+                        </div>
                     </div>
                 `;
             });
 
             comptador.innerText = dades.length;
-            if (dades.length > 0) {
-                btnSync.style.display = 'block';
-            } else {
+            if (dades.length > 0) btnSync.style.display = 'block';
+            else {
                 btnSync.style.display = 'none';
                 llistaRegistres.innerHTML = '<p style="color:gray; font-size:12px;">Cap allau pendent.</p>';
             }
         }
 
-        // 3. GUARDAR REAL
-        document.getElementById('btn-guardar').addEventListener('click', () => {
+        // --- GUARDAR REAL ---
+        document.getElementById('btn-guardar').addEventListener('click', async () => {
             const lloc = document.getElementById('input-lloc').value;
             const mida = document.getElementById('input-mida').value;
 
-            if (latitudActual === null) {
-                alert("Si us plau, captura primer la ubicació."); return;
-            }
-            if (lloc === "") {
-                alert("Escriu el nom del sector."); return;
-            }
+            if (latitudActual === null) { alert("Si us plau, captura primer la ubicació."); return; }
+            if (lloc === "") { alert("Escriu el nom del sector."); return; }
+            if (fotoBase64 === null) { alert("Si us plau, fes una fotografia de l'allau."); return; }
 
             const novaAllau = {
                 lloc: lloc,
                 mida: mida,
                 lat: latitudActual,
                 lon: longitudActual,
+                foto: fotoBase64, // Guardem tota la imatge!
                 data: new Date().toLocaleString()
             };
 
-            const dades = JSON.parse(localStorage.getItem('allaus_pendents')) || [];
+            const dades = await localforage.getItem('allaus_pendents') || [];
             dades.push(novaAllau);
-            localStorage.setItem('allaus_pendents', JSON.stringify(dades));
+            await localforage.setItem('allaus_pendents', dades); // Ho desem a IndexedDB
 
-            // Netegem l'estat per a la següent allau
+            // Netegem el formulari
             document.getElementById('input-lloc').value = "";
-            latitudActual = null;
-            longitudActual = null;
+            latitudActual = null; longitudActual = null; fotoBase64 = null;
             document.getElementById('coords-info').innerText = "Coordenades no capturades encara.";
+            document.getElementById('preview-foto').style.display = 'none';
             if (marcador) map.removeLayer(marcador);
             
             carregarDadesLocals();
-            alert("✅ Guardat al telèfon! Ho tens pendent d'enviar.");
+            alert("✅ Guardat al telèfon amb foto inclosa!");
         });
 
-        // 4. SINCRONITZAR
-        btnSync.addEventListener('click', () => {
-            if (!navigator.onLine) {
-                alert("❌ No tens internet per sincronitzar."); return;
-            }
+        // --- SINCRONITZAR ---
+        btnSync.addEventListener('click', async () => {
+            if (!navigator.onLine) { alert("❌ No tens internet per sincronitzar."); return; }
             btnSync.innerText = "⏳ Enviant...";
             
-            setTimeout(() => {
-                localStorage.removeItem('allaus_pendents');
+            setTimeout(async () => {
+                await localforage.removeItem('allaus_pendents');
                 carregarDadesLocals();
                 btnSync.innerText = "📡 Sincronitzar amb Servidor";
-                alert("🚀 Dades enviades!");
+                alert("🚀 Dades i imatges enviades a la UPAN!");
             }, 1500);
         });
 
+        // Arranquem
         carregarDadesLocals();
 
-        // 5. SERVICE WORKER
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js');
