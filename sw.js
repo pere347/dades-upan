@@ -1,14 +1,15 @@
-const CACHE_NAME = 'upan-cache-v2'; // He pujat la versió a v2 per forçar l'actualització
+const CACHE_NAME = 'upan-cache-v3';
 
 const urlsToCache = [
   './',
   './index.html',
-  // Afegim Leaflet a la memòria cau!
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
 ];
 
+// 1. INSTAL·LACIÓ
 self.addEventListener('install', event => {
+  self.skipWaiting(); // Forcem que el nou Service Worker s'activi immediatament
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
@@ -17,12 +18,37 @@ self.addEventListener('install', event => {
   );
 });
 
+// 2. ACTIVACIÓ (Neteja de brossa antiga)
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cache => {
+          // Si trobem una memòria antiga (ex: v1 o v2), l'esborrem
+          if (cache !== CACHE_NAME) {
+            return caches.delete(cache);
+          }
+        })
+      );
+    })
+  );
+});
+
+// 3. INTERCEPTOR: Estratègia "Network First" (Primer Internet, després Cau)
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request)
+    fetch(event.request)
       .then(response => {
-        if (response) return response;
-        return fetch(event.request);
+        // Si hi ha internet, aprofitem per guardar la versió més nova a la Cache per si després en perdem
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, responseClone);
+        });
+        return response; // I mostrem la web normal
+      })
+      .catch(() => {
+        // ERROR: No hi ha internet! Doncs traiem la web que teníem guardada a la Cache
+        return caches.match(event.request);
       })
   );
 });
