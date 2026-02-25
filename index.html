@@ -21,6 +21,13 @@
             --border-light: #e0e0e0;
         }
 
+        /* NOU: Regla d'or per evitar desbordaments. 
+           Assegura que el padding i les vores no sumin a l'ample total.
+        */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
         /* Reset bàsic per a mòbils */
         body { 
             font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; 
@@ -49,7 +56,7 @@
             padding: 16px; 
             max-width: 600px; 
             margin: 0 auto; 
-            box-sizing: border-box;
+            /* box-sizing: border-box; ja no cal aquí perquè està a l'arrel (*) */
         }
 
         /* ---- SECCIÓ MAPA ---- */
@@ -94,12 +101,13 @@
         /* Inputs de text i selectables */
         input[type="text"], select, textarea { 
             width: 100%; 
+            max-width: 100%; /* NOU: Evita que creixi més enllà del contenidor */
+            margin: 0; /* NOU: Neteja marges ocults afegits pels navegadors mòbils */
             padding: 12px; 
             border-radius: 8px; 
             border: 1px solid var(--border-light); 
-            font-size: 16px; /* Evita que l'iPhone faci zoom automàtic en clicar */
+            font-size: 16px; 
             background-color: #fafafa;
-            box-sizing: border-box;
             transition: border-color 0.2s;
         }
 
@@ -122,6 +130,8 @@
         .btn { 
             display: block;
             width: 100%; 
+            max-width: 100%; /* NOU: Contenció estricta */
+            margin: 0; /* NOU: Assegura que no hi ha marges extres */
             padding: 14px; 
             font-size: 1rem; 
             font-weight: 600; 
@@ -129,12 +139,12 @@
             border: none; 
             border-radius: 8px; 
             cursor: pointer; 
-            box-sizing: border-box;
             transition: opacity 0.2s, transform 0.1s;
         }
 
         .btn:active { transform: scale(0.98); opacity: 0.9; }
 
+        /* Com que hem posat margin:0 al .btn per defecte, afegim els espais verticals específics a cada botó */
         .btn-gps { 
             background-color: #e8ecef; 
             color: var(--primary); 
@@ -211,7 +221,7 @@
     <div class="container">
         
         <div id="map"></div>
-        <p class="map-hint">Toca el mapa per situar l'allau o empra el botó GPS.</p>
+        <p class="map-hint">Toca el mapa per situar l'allau o el botó GPS.</p>
         
         <button id="btn-gps" class="btn btn-gps">📍 Capturar la meva ubicació actual</button>
         <div id="coords-info">🗺️ Cap ubicació seleccionada</div>
@@ -227,11 +237,11 @@
                     <label>Mida Estimat</label>
                     <select id="input-mida">
                         <option value="" disabled selected>Tria...</option>
-                        <option value="D1">D1 (Molt petita)</option>
-                        <option value="D2">D2 (Petita)</option>
-                        <option value="D3">D3 (Mitjana)</option>
-                        <option value="D4">D4 (Gran)</option>
-                        <option value="D5">D5 (Molt gran)</option>
+                        <option value="D1">D1</option>
+                        <option value="D2">D2</option>
+                        <option value="D3">D3</option>
+                        <option value="D4">D4</option>
+                        <option value="D5">D5</option>
                     </select>
                 </div>
                 <div class="camp">
@@ -242,7 +252,7 @@
                         <option value="Neu humida">Neu humida</option>
                         <option value="Lliscament basal">Lliscament basal</option>
                         <option value="Neu recent">Neu recent</option>
-                        <option value="Sense determinar">Sense determinar</option>
+                        <option value="Neu ventada">Neu ventada</option>
                     </select>
                 </div>
             </div>
@@ -253,12 +263,12 @@
             </div>
 
             <div class="camp">
-                <label class="btn btn-foto" for="input-foto">📷 Capturar Fotografia</label>
+                <label class="btn btn-foto" for="input-foto">📷 Capturar fotografia</label>
                 <input type="file" id="input-foto" accept="image/*" capture="environment">
                 <img id="preview-foto" src="" alt="Previsualització de l'allau">
             </div>
 
-            <button id="btn-guardar" class="btn btn-guardar">💾 Guardar Observació al Dispositiu</button>
+            <button id="btn-guardar" class="btn btn-guardar">💾 Guardar observació al dispositiu</button>
         </div>
 
         <div class="sync-section">
