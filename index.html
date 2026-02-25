@@ -2,105 +2,256 @@
 <html lang="ca">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UPAN - Registre d'Allaus</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UPAN | Field Reports</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
 
     <style>
-        body { font-family: Arial, sans-serif; padding: 15px; max-width: 500px; margin: auto; }
-        #map { height: 300px; width: 100%; border-radius: 8px; margin-bottom: 15px; border: 2px solid #ddd; z-index: 1; }
-        .camp { margin-bottom: 15px; }
-        input, select, textarea { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 5px; border: 1px solid #ccc; background-color: white; font-family: inherit; }
-        textarea { resize: vertical; min-height: 80px; } /* Caixa de text ajustable */
-        
-        .btn { padding: 15px; font-size: 16px; border: none; border-radius: 8px; width: 100%; cursor: pointer; color: white; font-weight: bold; margin-bottom: 10px; }
-        .btn-gps { background-color: #3498db; }
-        .btn-guardar { background-color: #f39c12; }
-        .btn-sync { background-color: #2e7d32; display: none; }
-        
-        .btn-foto { 
-            background-color: #9b59b6; 
-            display: block; 
-            box-sizing: border-box; 
-            text-align: center; 
+        /* Variables de color de la UPAN */
+        :root {
+            --primary: #2c3e50;    /* Blau corporatiu fosc */
+            --accent: #3498db;     /* Blau actiu */
+            --success: #27ae60;    /* Verd d'èxit */
+            --bg: #f4f7f6;         /* Fons gris clar per contrast */
+            --white: #ffffff;
+            --text-main: #333333;
+            --border-light: #e0e0e0;
         }
+
+        /* Regla d'or: Evita que els elements desbordin per culpa del padding */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            padding-bottom: 40px; /* Espai extra al final */
+        }
+
+        header {
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 16px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        header h2 { margin: 0; font-size: 1.2rem; font-weight: 600; letter-spacing: 0.5px; }
+
+        .container { 
+            padding: 16px; 
+            max-width: 600px; 
+            margin: 0 auto; 
+        }
+
+        /* ---- MAPA ---- */
+        #map { 
+            height: 320px; 
+            width: 100%; 
+            border-radius: 12px; 
+            border: 1px solid var(--border-light);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            z-index: 1; 
+            margin-bottom: 8px;
+        }
+
+        .map-hint {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 16px;
+            font-style: italic;
+        }
+
+        /* ---- TARGETES (Cards) ---- */
+        .card {
+            background: var(--white);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+        }
+
+        .camp { margin-bottom: 16px; }
         
-        #coords-info { font-size: 12px; color: #555; text-align: center; margin-bottom: 15px; }
-        #preview-foto { display: none; width: 100%; margin-top: 10px; border-radius: 8px; border: 2px dashed #9b59b6; }
-        
+        label { 
+            display: block; 
+            font-weight: 600; 
+            margin-bottom: 6px; 
+            font-size: 0.9rem;
+            color: var(--primary);
+        }
+
+        input[type="text"], select, textarea { 
+            width: 100%; 
+            padding: 12px; 
+            border-radius: 8px; 
+            border: 1px solid var(--border-light); 
+            font-size: 16px; /* Evita zoom en iOS */
+            background-color: #fafafa;
+            margin: 0;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus { 
+            border-color: var(--accent); 
+            outline: none; 
+            background-color: var(--white);
+        }
+
+        textarea { resize: vertical; min-height: 80px; }
+
+        .row-2 { display: flex; gap: 12px; }
+        .row-2 > div { flex: 1; }
+
+        /* ---- BOTONS ---- */
+        .btn { 
+            display: block;
+            width: 100%; 
+            padding: 14px; 
+            font-size: 1rem; 
+            font-weight: 600; 
+            text-align: center;
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            margin: 0;
+            transition: opacity 0.2s, transform 0.1s;
+        }
+
+        .btn:active { transform: scale(0.98); opacity: 0.9; }
+
+        .btn-gps { background-color: #e8ecef; color: var(--primary); margin-bottom: 16px; border: 1px solid #ced4da; }
+        .btn-foto { background-color: var(--primary); color: var(--white); margin-bottom: 8px; }
+        .btn-guardar { background-color: var(--success); color: var(--white); margin-top: 8px; }
+        .btn-sync { background-color: var(--accent); color: var(--white); margin-top: 12px; }
+
+        #coords-info { 
+            font-family: monospace;
+            font-size: 12px; 
+            color: #7f8c8d; 
+            text-align: center; 
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+
         input[type="file"] { display: none; }
+        #preview-foto { display: none; width: 100%; border-radius: 8px; margin-top: 10px; object-fit: cover; max-height: 250px; border: 1px solid var(--border-light); }
+
+        /* ---- LLISTA PENDENTS ---- */
+        .sync-section {
+            background-color: #ebf5fb;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #d6eaf8;
+        }
+
+        .sync-section h3 { margin-top: 0; font-size: 1rem; color: var(--primary); display: flex; justify-content: space-between; }
         
-        .caixa-llista { margin-top: 20px; padding: 15px; background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; }
-        .registre { border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 10px; font-size: 14px; display: flex; align-items: center; gap: 15px; }
-        .registre img { width: 60px; height: 60px; object-fit: cover; border-radius: 5px; border: 1px solid #ccc; }
-        .info-txt { flex: 1; }
+        .registre { 
+            background: var(--white);
+            border: 1px solid var(--border-light);
+            padding: 10px; 
+            border-radius: 8px;
+            margin-bottom: 10px; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+        }
+
+        .registre img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; }
+        .info-txt { flex: 1; font-size: 13px; color: #555; }
+        .info-txt strong { display: block; color: var(--text-main); font-size: 14px; margin-bottom: 3px; }
     </style>
 </head>
 <body>
 
-    <h2>🏔️ Reportar Allau (UPAN)</h2>
+    <header>
+        <h2>🏔️ UPAN | Registre de Camp</h2>
+    </header>
 
-    <div id="map"></div>
-    <button id="btn-gps" class="btn btn-gps">📍 Capturar la meva ubicació</button>
-    <div id="coords-info">Coordenades no capturades encara.</div>
+    <div class="container">
+        
+        <div id="map"></div>
+        <p class="map-hint">Toca el mapa per situar l'allau o empra el botó GPS.</p>
+        
+        <button id="btn-gps" class="btn btn-gps">📍 Capturar la meva ubicació actual</button>
+        <div id="coords-info">🗺️ Cap ubicació seleccionada</div>
 
-    <div class="camp">
-        <label>Nom del sector / Lloc:</label>
-        <input type="text" id="input-lloc" placeholder="Ex: Pala d'Eixe">
-    </div>
-    
-    <div class="camp">
-        <label>Mida de l'allau:</label>
-        <select id="input-mida">
-            <option value="D1">D1</option>
-            <option value="D2">D2</option>
-            <option value="D3">D3</option>
-            <option value="D4">D4</option>
-            <option value="D5">D5</option>
-        </select>
-    </div>
+        <div class="card">
+            <div class="camp">
+                <label>Nom del Sector / Lloc</label>
+                <input type="text" id="input-lloc" placeholder="Ex: Vessant N, Tuc de la Feixa">
+            </div>
 
-    <div class="camp">
-        <label>Tipus d'allau:</label>
-        <select id="input-tipus">
-            <option value="Placa de vent">Placa de vent</option>
-            <option value="Lliscament basal">Lliscament basal</option>
-            <option value="Neu humida">Neu humida</option>
-            <option value="Neu recent">Neu recent</option>
-            <option value="Neu ventada">Neu ventada</option>
-        </select>
-    </div>
+            <div class="row-2">
+                <div class="camp">
+                    <label>Mida</label>
+                    <select id="input-mida">
+                        <option value="" disabled selected>Tria...</option>
+                        <option value="D1">D1</option>
+                        <option value="D2">D2</option>
+                        <option value="D3">D3</option>
+                        <option value="D4">D4</option>
+                        <option value="D5">D5</option>
+                    </select>
+                </div>
+                <div class="camp">
+                    <label>Tipus</label>
+                    <select id="input-tipus">
+                        <option value="" disabled selected>Tria...</option>
+                        <option value="Placa de vent">Placa de vent</option>
+                        <option value="Neu humida">Neu humida</option>
+                        <option value="Lliscament basal">Lliscament basal</option>
+                        <option value="Neu recent">Neu recent</option>
+                        <option value="Neu ventada">Neu ventada</option>
+                    </select>
+                </div>
+            </div>
 
-    <div class="camp">
-        <label>Comentaris (opcional):</label>
-        <textarea id="input-comentaris" placeholder="Detalls addicionals: gruix, orientació, impactes..."></textarea>
-    </div>
+            <div class="camp">
+                <label>Comentaris (Opcional)</label>
+                <textarea id="input-comentaris" placeholder="Detalls addicionals: gruix, orientació, impactes..."></textarea>
+            </div>
 
-    <div class="camp">
-        <label class="btn btn-foto" for="input-foto">📷 Fer fotografia</label>
-        <input type="file" id="input-foto" accept="image/*" capture="environment">
-        <img id="preview-foto" src="" alt="Previsualització">
-    </div>
+            <div class="camp">
+                <label class="btn btn-foto" for="input-foto">📷 Capturar fotografia</label>
+                <input type="file" id="input-foto" accept="image/*" capture="environment">
+                <img id="preview-foto" src="" alt="Previsualització">
+            </div>
 
-    <button id="btn-guardar" class="btn btn-guardar">💾 Guardar al telèfon (Offline)</button>
+            <button id="btn-guardar" class="btn btn-guardar">💾 Guardar al dispositiu (Offline)</button>
+        </div>
 
-    <div class="caixa-llista">
-        <h3>Pendents d'enviar: <span id="comptador">0</span></h3>
-        <div id="llista-registres"></div>
-        <button id="btn-sync" class="btn btn-sync">📡 Sincronitzar amb servidor</button>
+        <div class="sync-section">
+            <h3>Pendents d'enviar <span>(<span id="comptador">0</span>)</span></h3>
+            <div id="llista-registres"></div>
+            <button id="btn-sync" class="btn btn-sync" style="display:none;">📡 Sincronitzar amb servidor</button>
+        </div>
+
     </div>
 
     <script>
-        let latitudActual = null;
-        let longitudActual = null;
+        let latSelected = null;
+        let lonSelected = null;
         let fotoBase64 = null; 
         let marcador;
 
-        const map = L.map('map').setView([42.5, 1.5], 8);
+        const map = L.map('map').setView([42.633, 0.822], 9);
         L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/topografic/MON3857NW/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '© ICGC'
@@ -108,24 +259,46 @@
 
         setTimeout(() => { map.invalidateSize(); }, 500);
 
+        // FUNCIÓ CENTRAL: Actualitza el punt al mapa i les variables
+        function updateMarker(lat, lon, label = "Ubicació de l'allau") {
+            latSelected = lat;
+            lonSelected = lon;
+            document.getElementById('coords-info').innerHTML = `✅ Lat: <strong>${lat.toFixed(5)}</strong>, Lon: <strong>${lon.toFixed(5)}</strong>`;
+            
+            if (marcador) map.removeLayer(marcador);
+            marcador = L.marker([lat, lon], {draggable: true}).addTo(map).bindPopup(label).openPopup();
+            
+            // Permet arrossegar el punt si ens hem equivocat
+            marcador.on('dragend', function(e) {
+                const pos = marcador.getLatLng();
+                updateMarker(pos.lat, pos.lng, "Ubicació ajustada");
+            });
+        }
+
+        // Clic al mapa
+        map.on('click', function(e) {
+            updateMarker(e.latlng.lat, e.latlng.lng, "Ubicació marcada manualment");
+        });
+
+        // Botó GPS
         document.getElementById('btn-gps').addEventListener('click', () => {
             const infoDiv = document.getElementById('coords-info');
             if (!navigator.geolocation) return;
             infoDiv.innerText = "Buscant satèl·lits... 🛰️";
+            
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    latitudActual = position.coords.latitude;
-                    longitudActual = position.coords.longitude;
-                    infoDiv.innerHTML = `✅ Lat: ${latitudActual.toFixed(5)}, Lon: ${longitudActual.toFixed(5)}`;
-                    map.setView([latitudActual, longitudActual], 15);
-                    if (marcador) map.removeLayer(marcador);
-                    marcador = L.marker([latitudActual, longitudActual]).addTo(map);
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    map.setView([lat, lon], 15);
+                    updateMarker(lat, lon, "La meva posició GPS");
                 },
                 (error) => { infoDiv.innerHTML = `<span style='color:red;'>Error de GPS.</span>`; },
                 { enableHighAccuracy: true, timeout: 60000, maximumAge: 0 }
             );
         });
 
+        // Gestió Fotografia
         document.getElementById('input-foto').addEventListener('change', function(event) {
             const file = event.target.files[0];
             if (file) {
@@ -140,58 +313,20 @@
             }
         });
 
-        const llistaRegistres = document.getElementById('llista-registres');
-        const comptador = document.getElementById('comptador');
-        const btnSync = document.getElementById('btn-sync');
-
-        async function carregarDadesLocals() {
-            const dades = await localforage.getItem('allaus_pendents') || [];
-            llistaRegistres.innerHTML = '';
-            
-            dades.forEach((allau, index) => {
-                const imgTag = allau.foto ? `<img src="${allau.foto}" alt="Miniatura">` : '';
-                // Afegim una mica de lògica per no mostrar "undefined" si no hi ha comentari
-                const comentariTxt = allau.comentaris ? `<br><em>"${allau.comentaris}"</em>` : '';
-                
-                llistaRegistres.innerHTML += `
-                    <div class="registre">
-                        ${imgTag}
-                        <div class="info-txt">
-                            <strong>#${index + 1} - ${allau.lloc}</strong><br>
-                            <small>Mida: ${allau.mida} | Tipus: ${allau.tipus}</small>
-                            <small style="display:block; color:#666;">Coords: ${allau.lat.toFixed(4)}, ${allau.lon.toFixed(4)}</small>
-                            <small style="color:#444;">${comentariTxt}</small>
-                        </div>
-                    </div>
-                `;
-            });
-
-            comptador.innerText = dades.length;
-            if (dades.length > 0) btnSync.style.display = 'block';
-            else {
-                btnSync.style.display = 'none';
-                llistaRegistres.innerHTML = '<p style="color:gray; font-size:12px;">Cap allau pendent.</p>';
-            }
-        }
-
+        // Guardar al telèfon
         document.getElementById('btn-guardar').addEventListener('click', async () => {
             const lloc = document.getElementById('input-lloc').value;
             const mida = document.getElementById('input-mida').value;
             const tipus = document.getElementById('input-tipus').value;
-            const comentaris = document.getElementById('input-comentaris').value; // Nou
+            const comentaris = document.getElementById('input-comentaris').value;
 
-            if (latitudActual === null) { alert("Si us plau, captura primer la ubicació."); return; }
+            if (latSelected === null) { alert("Si us plau, toca el mapa o usa el GPS per situar l'allau."); return; }
             if (lloc === "") { alert("Escriu el nom del sector."); return; }
             if (fotoBase64 === null) { alert("Si us plau, fes una fotografia de l'allau."); return; }
 
             const novaAllau = {
-                lloc: lloc,
-                mida: mida,
-                tipus: tipus,
-                comentaris: comentaris,
-                lat: latitudActual,
-                lon: longitudActual,
-                foto: fotoBase64,
+                lloc: lloc, mida: mida, tipus: tipus, comentaris: comentaris,
+                lat: latSelected, lon: lonSelected, foto: fotoBase64,
                 data: new Date().toLocaleString()
             };
 
@@ -204,8 +339,8 @@
             document.getElementById('input-comentaris').value = "";
             document.getElementById('input-mida').selectedIndex = 0;
             document.getElementById('input-tipus').selectedIndex = 0;
-            latitudActual = null; longitudActual = null; fotoBase64 = null;
-            document.getElementById('coords-info').innerText = "Coordenades no capturades encara.";
+            latSelected = null; lonSelected = null; fotoBase64 = null;
+            document.getElementById('coords-info').innerText = "🗺️ Cap ubicació seleccionada";
             document.getElementById('preview-foto').style.display = 'none';
             if (marcador) map.removeLayer(marcador);
             
@@ -213,17 +348,53 @@
             alert("✅ Guardat al telèfon amb èxit!");
         });
 
-        btnSync.addEventListener('click', async () => {
+        // Carregar la llista visual
+        async function carregarDadesLocals() {
+            const dades = await localforage.getItem('allaus_pendents') || [];
+            const llistaRegistres = document.getElementById('llista-registres');
+            const btnSync = document.getElementById('btn-sync');
+            
+            llistaRegistres.innerHTML = '';
+            
+            dades.forEach((allau, index) => {
+                const comentariTxt = allau.comentaris ? `<br><em style="color:#777">"${allau.comentaris}"</em>` : '';
+                llistaRegistres.innerHTML += `
+                    <div class="registre">
+                        <img src="${allau.foto}" alt="Miniatura">
+                        <div class="info-txt">
+                            <strong>#${index + 1} - ${allau.lloc}</strong>
+                            <span>${allau.mida || '-'} | ${allau.tipus || '-'}</span>
+                            ${comentariTxt}
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('comptador').innerText = dades.length;
+            
+            if (dades.length > 0) {
+                btnSync.style.display = 'block';
+            } else {
+                btnSync.style.display = 'none';
+                llistaRegistres.innerHTML = '<p style="color:gray; font-size:13px; text-align:center;">No tens registres pendents.</p>';
+            }
+        }
+
+        // Simular enviament
+        document.getElementById('btn-sync').addEventListener('click', async () => {
             if (!navigator.onLine) { alert("❌ No tens internet per sincronitzar."); return; }
-            btnSync.innerText = "⏳ Enviant...";
+            const btnSync = document.getElementById('btn-sync');
+            btnSync.innerText = "⏳ Enviant dades...";
+            
             setTimeout(async () => {
                 await localforage.removeItem('allaus_pendents');
                 carregarDadesLocals();
-                btnSync.innerText = "📡 Sincronitzar amb Servidor";
-                alert("🚀 Dades enviades a la UPAN!");
+                btnSync.innerText = "📡 Sincronitzar amb servidor";
+                alert("🚀 Dades enviades correctament a la UPAN!");
             }, 1500);
         });
 
+        // Iniciem la llista i el Service Worker
         carregarDadesLocals();
 
         if ('serviceWorker' in navigator) {
@@ -234,4 +405,3 @@
     </script>
 </body>
 </html>
-
