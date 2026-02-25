@@ -74,6 +74,36 @@
             font-style: italic;
         }
 
+        .map-wrapper {
+            position: relative;
+            margin-bottom: 8px;
+        }
+
+        /* El botó flotant del mapa */
+        .btn-map-gps {
+            position: absolute;
+            top: 10px;
+            right: 10px; /* El posem a la dreta perquè a l'esquerra hi ha el zoom de Leaflet */
+            z-index: 1000; /* IMPORTANT: Leaflet treballa amb z-index 400, així ens hi posem per sobre */
+            background-color: white;
+            border: 2px solid rgba(0,0,0,0.2);
+            border-radius: 4px;
+            width: 34px;
+            height: 34px;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+            padding: 0;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-map-gps:active {
+            background-color: #f4f4f4;
+        }
+
         /* ---- TARGETES (Cards) ---- */
         .card {
             background: var(--white);
@@ -186,7 +216,10 @@
 
     <div class="container">
         
-        <div id="map"></div>
+        <div class="map-wrapper">
+            <div id="map"></div>
+            <button id="btn-map-gps" class="btn-map-gps" title="Centrar a la meva posició" type="button">🎯</button>
+        </div>
         <p class="map-hint">Toca el mapa per situar l'allau o el botó GPS.</p>
         
         <button id="btn-gps" class="btn btn-gps">📍 Capturar la meva ubicació actual</button>
@@ -405,6 +438,7 @@
     </script>
 </body>
 </html>
+
 
 
 
