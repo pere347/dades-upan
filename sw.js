@@ -1,4 +1,4 @@
-const CACHE_NAME = 'upan-cache-v7'; // Pugem a v7 per forçar l'actualització!
+const CACHE_NAME = 'upan-cache-v8';
 
 const urlsToCache = [
   './',
