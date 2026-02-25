@@ -3,170 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>UPAN | Field Reports</title>
+    <title>UPAN | Registre de Camp</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
 
     <style>
+        /* Variables de color de la UPAN (estil emergències) */
         :root {
-            --primary: #2c3e50;
-            --accent: #3498db;
-            --success: #27ae60;
-            --warning: #f39c12;
-            --bg: #f4f7f6;
-            --text: #333;
+            --primary: #2c3e50;    /* Blau fosc/gris */
+            --accent: #3498db;     /* Blau interactiu */
+            --success: #27ae60;    /* Verd ok */
+            --bg: #f4f7f6;         /* Fons clar per evitar fatiga */
+            --white: #ffffff;
+            --text-main: #333333;
+            --border-light: #e0e0e0;
         }
 
+        /* Reset bàsic per a mòbils */
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; 
             background-color: var(--bg);
-            color: var(--text);
+            color: var(--text-main);
             margin: 0;
             padding: 0;
         }
 
+        /* Capçalera fixa */
         header {
             background-color: var(--primary);
-            color: white;
-            padding: 1rem;
+            color: var(--white);
+            padding: 16px;
             text-align: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        .container { padding: 15px; max-width: 600px; margin: auto; }
+        header h2 { margin: 0; font-size: 1.2rem; font-weight: 600; letter-spacing: 0.5px; }
 
+        /* Contenidor principal */
+        .container { 
+            padding: 16px; 
+            max-width: 600px; 
+            margin: 0 auto; 
+            box-sizing: border-box;
+        }
+
+        /* ---- SECCIÓ MAPA ---- */
         #map { 
-            height: 350px; 
+            height: 320px; 
             width: 100%; 
             border-radius: 12px; 
-            margin-bottom: 10px; 
-            border: 1px solid #ddd;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 2px solid var(--border-light);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             z-index: 1; 
+            margin-bottom: 8px;
         }
 
         .map-hint {
-            font-size: 11px;
-            color: #7f8c8d;
+            font-size: 12px;
+            color: #666;
             text-align: center;
-            margin-bottom: 15px;
-            font-style: italic;
+            margin-top: 0;
+            margin-bottom: 16px;
+            font-style: normal;
         }
 
+        /* ---- FORMULARI (Targetes) ---- */
         .card {
-            background: white;
+            background: var(--white);
             padding: 20px;
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
         }
 
-        .camp { margin-bottom: 18px; }
+        .camp { margin-bottom: 16px; }
         
         label { 
             display: block; 
             font-weight: 600; 
-            margin-bottom: 8px; 
-            font-size: 14px;
+            margin-bottom: 6px; 
+            font-size: 0.9rem;
             color: var(--primary);
         }
 
-        input, select, textarea { 
+        /* Inputs de text i selectables */
+        input[type="text"], select, textarea { 
             width: 100%; 
             padding: 12px; 
             border-radius: 8px; 
-            border: 1px solid #dcdde1; 
-            font-size: 16px; /* Evita zoom automàtic en iOS */
-            transition: border 0.3s;
+            border: 1px solid var(--border-light); 
+            font-size: 16px; /* Evita que l'iPhone faci zoom automàtic en clicar */
+            background-color: #fafafa;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
         }
 
-        input:focus { border-color: var(--accent); outline: none; }
+        input:focus, select:focus, textarea:focus { 
+            border-color: var(--accent); 
+            outline: none; 
+            background-color: var(--white);
+        }
 
-        .btn { 
+        textarea { resize: vertical; min-height: 80px; }
+
+        /* Estructura en columnes per estalviar espai */
+        .row-2 {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            gap: 12px;
+        }
+        .row-2 > div { flex: 1; }
+
+        /* ---- BOTONS ---- */
+        .btn { 
+            display: block;
+            width: 100%; 
             padding: 14px; 
-            font-size: 16px; 
+            font-size: 1rem; 
+            font-weight: 600; 
+            text-align: center;
             border: none; 
             border-radius: 8px; 
-            width: 100%; 
             cursor: pointer; 
-            color: white; 
-            font-weight: 600; 
-            margin-bottom: 12px; 
-            transition: opacity 0.2s;
+            box-sizing: border-box;
+            transition: opacity 0.2s, transform 0.1s;
         }
 
-        .btn:active { opacity: 0.8; }
+        .btn:active { transform: scale(0.98); opacity: 0.9; }
 
-        .btn-gps { background-color: #ecf0f1; color: var(--primary); border: 1px solid #bdc3c7; }
-        .btn-foto { background-color: var(--primary); }
-        .btn-guardar { background-color: var(--success); margin-top: 10px; }
-        .btn-sync { background-color: var(--accent); margin-top: 10px; }
-
-        #coords-info { 
-            font-size: 12px; 
-            color: #7f8c8d; 
-            text-align: center; 
-            margin-bottom: 15px;
-            font-family: monospace;
+        .btn-gps { 
+            background-color: #e8ecef; 
+            color: var(--primary); 
+            margin-bottom: 16px; 
+            border: 1px solid #ced4da;
         }
+        
+        .btn-foto { background-color: var(--primary); color: var(--white); margin-bottom: 8px; }
+        .btn-guardar { background-color: var(--success); color: var(--white); margin-top: 8px; }
+        .btn-sync { background-color: var(--accent); color: var(--white); margin-top: 12px; }
 
+        /* Gestió de la càmera i imatges */
+        input[type="file"] { display: none; }
+        
         #preview-foto { 
             display: none; 
             width: 100%; 
-            margin-top: 10px; 
             border-radius: 8px; 
+            margin-top: 10px;
             object-fit: cover;
-            max-height: 200px;
+            max-height: 250px;
+            border: 1px solid var(--border-light);
         }
 
-        input[type="file"] { display: none; }
+        #coords-info { 
+            font-family: monospace;
+            font-size: 12px; 
+            color: #7f8c8d; 
+            text-align: center; 
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+
+        /* ---- LLISTA DE PENDENTS ---- */
+        .sync-section {
+            background-color: #ebf5fb;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #d6eaf8;
+        }
+
+        .sync-section h3 {
+            margin-top: 0;
+            font-size: 1rem;
+            color: var(--primary);
+            display: flex;
+            justify-content: space-between;
+        }
 
         .registre { 
-            background: #fff;
-            border: 1px solid #eee;
-            padding: 12px; 
-            border-radius: 10px;
+            background: var(--white);
+            border: 1px solid var(--border-light);
+            padding: 10px; 
+            border-radius: 8px;
             margin-bottom: 10px; 
             display: flex; 
             align-items: center; 
             gap: 12px; 
         }
 
-        .registre img { width: 50px; height: 50px; border-radius: 6px; }
-        .info-txt { flex: 1; font-size: 13px; }
-        .info-txt strong { display: block; color: var(--primary); }
+        .registre img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; }
+        .info-txt { flex: 1; font-size: 13px; color: #555; }
+        .info-txt strong { display: block; color: var(--text-main); font-size: 14px; margin-bottom: 3px; }
     </style>
 </head>
 <body>
 
     <header>
-        <h2 style="margin:0; font-size: 1.2rem;">🏔️ UPAN | Field Report</h2>
+        <h2>🏔️ UPAN | Field Report</h2>
     </header>
 
     <div class="container">
         
         <div id="map"></div>
-        <p class="map-hint">Toca el mapa per situar l'allau o usa el botó GPS</p>
+        <p class="map-hint">Toca el mapa per situar l'allau o empra el botó GPS.</p>
         
-        <button id="btn-gps" class="btn btn-gps">📍 La meva ubicació</button>
-        <div id="coords-info">Sense coordenades</div>
+        <button id="btn-gps" class="btn btn-gps">📍 Capturar la meva ubicació actual</button>
+        <div id="coords-info">🗺️ Cap ubicació seleccionada</div>
 
         <div class="card">
             <div class="camp">
-                <label>Lloc / Sector</label>
-                <input type="text" id="input-lloc" placeholder="Nom de la zona">
+                <label>Nom del Lloc / Sector</label>
+                <input type="text" id="input-lloc" placeholder="Ex: Vessant N, Tuc de la Feixa">
             </div>
 
-            <div style="display: flex; gap: 10px;">
-                <div class="camp" style="flex: 1;">
-                    <label>Mida</label>
+            <div class="row-2">
+                <div class="camp">
+                    <label>Mida Estimat</label>
                     <select id="input-mida">
+                        <option value="" disabled selected>Tria...</option>
                         <option value="D1">D1 (Molt petita)</option>
                         <option value="D2">D2 (Petita)</option>
                         <option value="D3">D3 (Mitjana)</option>
@@ -174,147 +234,43 @@
                         <option value="D5">D5 (Molt gran)</option>
                     </select>
                 </div>
-                <div class="camp" style="flex: 1;">
-                    <label>Problema</label>
+                <div class="camp">
+                    <label>Tipus / Problema</label>
                     <select id="input-tipus">
+                        <option value="" disabled selected>Tria...</option>
                         <option value="Placa de vent">Placa de vent</option>
                         <option value="Neu humida">Neu humida</option>
-                        <option value="Lliscament">Lliscament</option>
+                        <option value="Lliscament basal">Lliscament basal</option>
                         <option value="Neu recent">Neu recent</option>
+                        <option value="Sense determinar">Sense determinar</option>
                     </select>
                 </div>
             </div>
 
             <div class="camp">
-                <label>Observacions</label>
-                <textarea id="input-comentaris" placeholder="Detalls addicionals..."></textarea>
+                <label>Observacions addicionals</label>
+                <textarea id="input-comentaris" placeholder="Detalls sobre l'orientació, desencadenant, si és accidental..."></textarea>
             </div>
 
             <div class="camp">
-                <label class="btn btn-foto" for="input-foto">📷 Capturar Foto</label>
+                <label class="btn btn-foto" for="input-foto">📷 Capturar Fotografia</label>
                 <input type="file" id="input-foto" accept="image/*" capture="environment">
-                <img id="preview-foto" src="" alt="Vista prèvia">
+                <img id="preview-foto" src="" alt="Previsualització de l'allau">
             </div>
 
-            <button id="btn-guardar" class="btn btn-guardar">💾 Guardar Observació</button>
+            <button id="btn-guardar" class="btn btn-guardar">💾 Guardar Observació al Dispositiu</button>
         </div>
 
-        <div id="section-sync" style="margin-top: 30px;">
-            <h3 style="font-size: 1rem; color: var(--primary);">Pendents d'enviament (<span id="comptador">0</span>)</h3>
-            <div id="llista-registres"></div>
-            <button id="btn-sync" class="btn btn-sync" style="display:none;">📡 Enviar dades al servidor</button>
+        <div class="sync-section">
+            <h3>Registres Pendents <span>(<span id="comptador">0</span>)</span></h3>
+            <div id="llista-registres">
+                </div>
+            <button id="btn-sync" class="btn btn-sync" style="display:none;">📡 Sincronitzar amb el Servidor UPAN</button>
         </div>
+
     </div>
 
-    <script>
-        let latSelected = null;
-        let lonSelected = null;
-        let fotoBase64 = null; 
-        let marcador;
+    <script src="app.js"></script>
 
-        // Inicialitzar mapa
-        const map = L.map('map').setView([42.3, 1.8], 9);
-        L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/topografic/MON3857NW/{z}/{x}/{y}.png', {
-            maxZoom: 19, attribution: '© ICGC'
-        }).addTo(map);
-
-        // Funció per posar marcador
-        function updateMarker(lat, lon, label = "Ubicació de l'allau") {
-            latSelected = lat;
-            lonSelected = lon;
-            document.getElementById('coords-info').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
-            if (marcador) map.removeLayer(marcador);
-            marcador = L.marker([lat, lon], {draggable: true}).addTo(map).bindPopup(label).openPopup();
-            
-            marcador.on('dragend', function(e) {
-                const pos = marcador.getLatLng();
-                updateMarker(pos.lat, pos.lng);
-            });
-        }
-
-        // Clic al mapa
-        map.on('click', function(e) {
-            updateMarker(e.latlng.lat, e.latlng.lng);
-        });
-
-        // Botó GPS
-        document.getElementById('btn-gps').addEventListener('click', () => {
-            if (!navigator.geolocation) return;
-            navigator.geolocation.getCurrentPosition((position) => {
-                const { latitude, longitude } = position.coords;
-                map.setView([latitude, longitude], 15);
-                updateMarker(latitude, longitude, "La meva posició");
-            }, null, { enableHighAccuracy: true });
-        });
-
-        // Gestió de foto
-        document.getElementById('input-foto').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    fotoBase64 = event.target.result;
-                    const preview = document.getElementById('preview-foto');
-                    preview.src = fotoBase64;
-                    preview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // Guardar Local
-        document.getElementById('btn-guardar').addEventListener('click', async () => {
-            const lloc = document.getElementById('input-lloc').value;
-            if (!latSelected || !lloc || !fotoBase64) {
-                alert("Falten dades (Mapa, Lloc o Foto)");
-                return;
-            }
-
-            const report = {
-                lloc,
-                mida: document.getElementById('input-mida').value,
-                tipus: document.getElementById('input-tipus').value,
-                comentaris: document.getElementById('input-comentaris').value,
-                lat: latSelected,
-                lon: lonSelected,
-                foto: fotoBase64,
-                timestamp: new Date().toISOString()
-            };
-
-            const pendents = await localforage.getItem('allaus_pendents') || [];
-            pendents.push(report);
-            await localforage.setItem('allaus_pendents', pendents);
-            
-            alert("Guardat localment");
-            location.reload(); // Simplificació per netejar
-        });
-
-        // Carregar llista
-        async function renderList() {
-            const pendents = await localforage.getItem('allaus_pendents') || [];
-            const container = document.getElementById('llista-registres');
-            const comptador = document.getElementById('comptador');
-            const btnSync = document.getElementById('btn-sync');
-            
-            comptador.innerText = pendents.length;
-            container.innerHTML = pendents.length === 0 ? '<p style="font-size:12px; color:#999;">No hi ha informes pendents.</p>' : '';
-            
-            if(pendents.length > 0) btnSync.style.display = 'block';
-
-            pendents.forEach(item => {
-                container.innerHTML += `
-                    <div class="registre">
-                        <img src="${item.foto}">
-                        <div class="info-txt">
-                            <strong>${item.lloc}</strong>
-                            <span>${item.mida} | ${item.tipus}</span>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        renderList();
-    </script>
 </body>
 </html>
