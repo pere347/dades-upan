@@ -1,4 +1,4 @@
-const CACHE_NAME = 'upan-cache-v10';
+const CACHE_NAME = 'upan-cache-v11';
 
 const urlsToCache = [
   './',
