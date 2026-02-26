@@ -10,18 +10,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
 
     <style>
-        /* Variables de color de la UPAN */
         :root {
-            --primary: #2c3e50;    /* Blau corporatiu fosc */
-            --accent: #3498db;     /* Blau actiu */
-            --success: #27ae60;    /* Verd d'èxit */
-            --bg: #f4f7f6;         /* Fons gris clar per contrast */
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --bg: #f4f7f6;
             --white: #ffffff;
             --text-main: #333333;
             --border-light: #e0e0e0;
         }
 
-        /* Regla d'or: Evita que els elements desbordin per culpa del padding */
         *, *::before, *::after {
             box-sizing: border-box;
         }
@@ -32,7 +30,7 @@
             color: var(--text-main);
             margin: 0;
             padding: 0;
-            padding-bottom: 40px; /* Espai extra al final */
+            padding-bottom: 40px; 
         }
 
         header {
@@ -54,7 +52,6 @@
             margin: 0 auto; 
         }
 
-        /* ---- MAPA ---- */
         #map { 
             height: 320px; 
             width: 100%; 
@@ -79,12 +76,11 @@
             margin-bottom: 8px;
         }
 
-        /* El botó flotant del mapa */
         .btn-map-gps {
             position: absolute;
-            top: 10px;
-            right: 10px; /* El posem a la dreta perquè a l'esquerra hi ha el zoom de Leaflet */
-            z-index: 1000; /* IMPORTANT: Leaflet treballa amb z-index 400, així ens hi posem per sobre */
+            top: 60px; /* Desplaçat per no tapar el selector de capes */
+            right: 10px; 
+            z-index: 1000; 
             background-color: white;
             border: 2px solid rgba(0,0,0,0.2);
             border-radius: 4px;
@@ -104,7 +100,6 @@
             background-color: #f4f4f4;
         }
 
-        /* ---- TARGETES (Cards) ---- */
         .card {
             background: var(--white);
             padding: 20px;
@@ -128,7 +123,7 @@
             padding: 12px; 
             border-radius: 8px; 
             border: 1px solid var(--border-light); 
-            font-size: 16px; /* Evita zoom en iOS */
+            font-size: 16px; 
             background-color: #fafafa;
             margin: 0;
             transition: border-color 0.2s;
@@ -146,7 +141,6 @@
         .row-2 { display: flex; gap: 12px; }
         .row-2 > div { flex: 1; }
 
-        /* ---- BOTONS ---- */
         .btn { 
             display: block;
             width: 100%; 
@@ -180,9 +174,47 @@
         }
 
         input[type="file"] { display: none; }
-        #preview-foto { display: none; width: 100%; border-radius: 8px; margin-top: 10px; object-fit: cover; max-height: 250px; border: 1px solid var(--border-light); }
+        
+        /* Contenidor per múltiples imatges */
+        #preview-container { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 10px; 
+            margin-top: 10px; 
+        }
+        
+        .preview-img-wrapper {
+            position: relative;
+            width: calc(33.333% - 7px); /* 3 columnes amb gap */
+            aspect-ratio: 1;
+        }
+        
+        .preview-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+        }
 
-        /* ---- LLISTA PENDENTS ---- */
+        .btn-remove-foto {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
         .sync-section {
             background-color: #ebf5fb;
             padding: 16px;
@@ -203,9 +235,11 @@
             gap: 12px; 
         }
 
-        .registre img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; }
+        .registre .thumblist { display: flex; gap: 5px; flex-shrink: 0; }
+        .registre img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; border: 1px solid #ccc; }
         .info-txt { flex: 1; font-size: 13px; color: #555; }
         .info-txt strong { display: block; color: var(--text-main); font-size: 14px; margin-bottom: 3px; }
+        .foto-count { font-size: 11px; background: #eee; padding: 2px 6px; border-radius: 10px; display: inline-block; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -220,7 +254,7 @@
             <div id="map"></div>
             <button id="btn-map-gps" class="btn-map-gps" title="Centrar a la meva posició" type="button">🎯</button>
         </div>
-        <p class="map-hint">Toca el mapa per situar l'allau o el botó GPS.</p>
+        <p class="map-hint">Toca el mapa per situar l'allau o empra el botó GPS per la ubicació exacta.</p>
         
         <button id="btn-gps" class="btn btn-gps">📍 Capturar la meva ubicació actual</button>
         <div id="coords-info">🗺️ Cap ubicació seleccionada</div>
@@ -265,8 +299,8 @@
 
             <div class="camp">
                 <label class="btn btn-foto" for="input-foto">📷 Capturar fotografia</label>
-                <input type="file" id="input-foto" accept="image/*" capture="environment">
-                <img id="preview-foto" src="" alt="Previsualització">
+                <input type="file" id="input-foto" accept="image/*" multiple>
+                <div id="preview-container"></div>
             </div>
 
             <button id="btn-guardar" class="btn btn-guardar">💾 Guardar al dispositiu (Offline)</button>
@@ -283,18 +317,34 @@
     <script>
         let latSelected = null;
         let lonSelected = null;
-        let fotoBase64 = null; 
+        let fotosArray = []; // Ara és un array per guardar múltiples fotos
         let marcador;
 
-        const map = L.map('map').setView([42.400, 1.800], 8);
-        L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/topografic/MON3857NW/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© ICGC'
-        }).addTo(map);
+        // 1. CONFIGURACIÓ DE CAPES DEL MAPA (ICGC Topogràfic i Ortofoto)
+        const icgcTopo = L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/topografic/MON3857NW/{z}/{x}/{y}.png', {
+            maxZoom: 19, attribution: '© ICGC'
+        });
+
+        const icgcOrto = L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/orto/MON3857NW/{z}/{x}/{y}.png', {
+            maxZoom: 19, attribution: '© ICGC'
+        });
+
+        const map = L.map('map', {
+            center: [42.400, 1.800],
+            zoom: 8,
+            layers: [icgcTopo] // Capa per defecte
+        });
+
+        const baseMaps = {
+            "Mapa Topogràfic": icgcTopo,
+            "Ortofoto Vignt": icgcOrto
+        };
+
+        // Afegim el controlador de capes a dalt a la dreta
+        L.control.layers(baseMaps, null, {position: 'topright'}).addTo(map);
 
         setTimeout(() => { map.invalidateSize(); }, 500);
 
-        // FUNCIÓ CENTRAL: Actualitza el punt al mapa i les variables
         function updateMarker(lat, lon, label = "Ubicació de l'allau") {
             latSelected = lat;
             lonSelected = lon;
@@ -303,19 +353,39 @@
             if (marcador) map.removeLayer(marcador);
             marcador = L.marker([lat, lon], {draggable: true}).addTo(map).bindPopup(label).openPopup();
             
-            // Permet arrossegar el punt si ens hem equivocat
             marcador.on('dragend', function(e) {
                 const pos = marcador.getLatLng();
                 updateMarker(pos.lat, pos.lng, "Ubicació ajustada");
             });
         }
 
-        // Clic al mapa
         map.on('click', function(e) {
             updateMarker(e.latlng.lat, e.latlng.lng, "Ubicació marcada manualment");
         });
 
-        // Botó GPS
+        document.getElementById('btn-map-gps').addEventListener('click', (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-map-gps');
+            if (!navigator.geolocation) {
+                alert("Geolocalització no suportada pel navegador.");
+                return;
+            }
+
+            btn.innerText = "⏳";
+
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    map.setView([pos.coords.latitude, pos.coords.longitude], 14);
+                    btn.innerText = "🎯";
+                },
+                (err) => {
+                    alert("Error obtenint ubicació per centrar el mapa.");
+                    btn.innerText = "🎯";
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        });
+
         document.getElementById('btn-gps').addEventListener('click', () => {
             const infoDiv = document.getElementById('coords-info');
             if (!navigator.geolocation) return;
@@ -333,22 +403,47 @@
             );
         });
 
-        // Gestió Fotografia
+        // 2. GESTIÓ MÚLTIPLES FOTOS
         document.getElementById('input-foto').addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
+            const files = event.target.files;
+            if (!files.length) return;
+
+            const container = document.getElementById('preview-container');
+
+            Array.from(files).forEach(file => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    fotoBase64 = e.target.result; 
-                    const preview = document.getElementById('preview-foto');
-                    preview.src = fotoBase64;
-                    preview.style.display = 'block';
+                    const base64Data = e.target.result;
+                    fotosArray.push(base64Data);
+                    
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'preview-img-wrapper';
+                    
+                    const img = document.createElement('img');
+                    img.src = base64Data;
+                    
+                    const btnRemove = document.createElement('button');
+                    btnRemove.className = 'btn-remove-foto';
+                    btnRemove.innerHTML = '×';
+                    btnRemove.onclick = function() {
+                        const index = fotosArray.indexOf(base64Data);
+                        if (index > -1) {
+                            fotosArray.splice(index, 1);
+                        }
+                        wrapper.remove();
+                    };
+                    
+                    wrapper.appendChild(img);
+                    wrapper.appendChild(btnRemove);
+                    container.appendChild(wrapper);
                 };
                 reader.readAsDataURL(file);
-            }
+            });
+            
+            // Buidem l'input per permetre seleccionar la mateixa imatge si la borren i la volen tornar a posar
+            this.value = ''; 
         });
 
-        // Guardar al telèfon
         document.getElementById('btn-guardar').addEventListener('click', async () => {
             const lloc = document.getElementById('input-lloc').value;
             const mida = document.getElementById('input-mida').value;
@@ -357,11 +452,11 @@
 
             if (latSelected === null) { alert("Si us plau, toca el mapa o usa el GPS per situar l'allau."); return; }
             if (lloc === "") { alert("Escriu el nom del sector."); return; }
-            if (fotoBase64 === null) { alert("Si us plau, fes una fotografia de l'allau."); return; }
+            if (fotosArray.length === 0) { alert("Si us plau, fes com a mínim una fotografia de l'allau."); return; }
 
             const novaAllau = {
                 lloc: lloc, mida: mida, tipus: tipus, comentaris: comentaris,
-                lat: latSelected, lon: lonSelected, foto: fotoBase64,
+                lat: latSelected, lon: lonSelected, fotos: fotosArray, // Ara enviem l'array sencer
                 data: new Date().toLocaleString()
             };
 
@@ -374,16 +469,16 @@
             document.getElementById('input-comentaris').value = "";
             document.getElementById('input-mida').selectedIndex = 0;
             document.getElementById('input-tipus').selectedIndex = 0;
-            latSelected = null; lonSelected = null; fotoBase64 = null;
+            latSelected = null; lonSelected = null; 
+            fotosArray = []; // Buidem l'array de fotos
             document.getElementById('coords-info').innerText = "🗺️ Cap ubicació seleccionada";
-            document.getElementById('preview-foto').style.display = 'none';
+            document.getElementById('preview-container').innerHTML = ''; // Buidem les previsualitzacions
             if (marcador) map.removeLayer(marcador);
             
             carregarDadesLocals();
             alert("✅ Guardat al telèfon amb èxit!");
         });
 
-        // Carregar la llista visual
         async function carregarDadesLocals() {
             const dades = await localforage.getItem('allaus_pendents') || [];
             const llistaRegistres = document.getElementById('llista-registres');
@@ -393,12 +488,18 @@
             
             dades.forEach((allau, index) => {
                 const comentariTxt = allau.comentaris ? `<br><em style="color:#777">"${allau.comentaris}"</em>` : '';
+                
+                // Mostrar la primera foto com a miniatura principal
+                const imgTag = (allau.fotos && allau.fotos.length > 0) ? `<img src="${allau.fotos[0]}" alt="Miniatura">` : '';
+                const fotoCountInfo = (allau.fotos && allau.fotos.length > 1) ? `<span class="foto-count">📷 ${allau.fotos.length} fotos</span>` : '';
+
                 llistaRegistres.innerHTML += `
                     <div class="registre">
-                        <img src="${allau.foto}" alt="Miniatura">
+                        <div class="thumblist">${imgTag}</div>
                         <div class="info-txt">
                             <strong>#${index + 1} - ${allau.lloc}</strong>
                             <span>${allau.mida || '-'} | ${allau.tipus || '-'}</span>
+                            ${fotoCountInfo}
                             ${comentariTxt}
                         </div>
                     </div>
@@ -415,7 +516,6 @@
             }
         }
 
-        // Simular enviament
         document.getElementById('btn-sync').addEventListener('click', async () => {
             if (!navigator.onLine) { alert("❌ No tens internet per sincronitzar."); return; }
             const btnSync = document.getElementById('btn-sync');
@@ -429,7 +529,6 @@
             }, 1500);
         });
 
-        // Iniciem la llista i el Service Worker
         carregarDadesLocals();
 
         if ('serviceWorker' in navigator) {
@@ -440,10 +539,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
