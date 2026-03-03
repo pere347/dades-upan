@@ -14,254 +14,90 @@
             --primary: #2c3e50;
             --accent: #3498db;
             --success: #27ae60;
+            --danger: #e74c3c;
+            --warning: #f39c12;
             --bg: #f4f7f6;
             --white: #ffffff;
             --text-main: #333333;
             --border-light: #e0e0e0;
         }
 
-        *, *::before, *::after {
-            box-sizing: border-box;
-        }
+        *, *::before, *::after { box-sizing: border-box; }
 
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            background-color: var(--bg);
-            color: var(--text-main);
-            margin: 0;
-            padding: 0;
-            padding-bottom: 40px; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; 
+            background-color: var(--bg); color: var(--text-main); margin: 0; padding: 0; padding-bottom: 40px; 
         }
 
-        header {
-            background-color: var(--primary);
-            color: var(--white);
-            padding: 16px;
-            text-align: center;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
+        header { background-color: var(--primary); color: var(--white); padding: 16px; text-align: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        header h2 { margin: 0; font-size: 1.2rem; font-weight: 600; }
 
-        header h2 { margin: 0; font-size: 1.2rem; font-weight: 600; letter-spacing: 0.5px; }
+        .container { padding: 16px; max-width: 600px; margin: 0 auto; }
 
-        .container { 
-            padding: 16px; 
-            max-width: 600px; 
-            margin: 0 auto; 
-        }
+        .map-wrapper { position: relative; margin-bottom: 8px; }
+        #map { height: 320px; width: 100%; border-radius: 12px; border: 1px solid var(--border-light); z-index: 1; }
+        .map-hint { font-size: 12px; color: #666; text-align: center; margin-top: 0; margin-bottom: 16px; font-style: italic; }
 
-        #map { 
-            height: 320px; 
-            width: 100%; 
-            border-radius: 12px; 
-            border: 1px solid var(--border-light);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            z-index: 1; 
-            margin-bottom: 8px;
+        /* Igualem el botó de capes de Leaflet al nostre GPS */
+        .leaflet-touch .leaflet-control-layers-toggle, .leaflet-control-layers-toggle {
+            width: 34px !important; height: 34px !important; background-size: 20px 20px !important; background-position: center !important;
         }
-
-        .map-hint {
-            font-size: 12px;
-            color: #666;
-            text-align: center;
-            margin-top: 0;
-            margin-bottom: 16px;
-            font-style: italic;
-        }
-
-        .map-wrapper {
-            position: relative;
-            margin-bottom: 8px;
-        }
+        .leaflet-control-layers { border-radius: 4px !important; border: 2px solid rgba(0,0,0,0.2) !important; box-shadow: 0 1px 5px rgba(0,0,0,0.65) !important; margin-right: 10px !important; margin-top: 10px !important; }
 
         .btn-map-gps {
-            position: absolute;
-            top: 60px; /* Desplaçat per no tapar el selector de capes */
-            right: 10px; 
-            z-index: 1000; 
-            background-color: white;
-            border: 2px solid rgba(0,0,0,0.2);
-            border-radius: 4px;
-            width: 34px;
-            height: 34px;
-            font-size: 18px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 1px 5px rgba(0,0,0,0.65);
-            padding: 0;
-            transition: background-color 0.2s;
+            position: absolute; top: 60px; right: 10px; z-index: 1000; background-color: white; border: 2px solid rgba(0,0,0,0.2);
+            border-radius: 4px; width: 34px; height: 34px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 5px rgba(0,0,0,0.65); transition: background-color 0.2s;
         }
-        
-        .btn-map-gps:active {
-            background-color: #f4f4f4;
-        }
+        .btn-map-gps:active { background-color: #f4f4f4; }
 
-        .card {
-            background: var(--white);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            margin-bottom: 24px;
-        }
-
+        .card { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 24px; }
         .camp { margin-bottom: 16px; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; color: var(--primary); }
         
-        label { 
-            display: block; 
-            font-weight: 600; 
-            margin-bottom: 6px; 
-            font-size: 0.9rem;
-            color: var(--primary);
-        }
-
-        input[type="text"], select, textarea { 
-            width: 100%; 
-            padding: 12px; 
-            border-radius: 8px; 
-            border: 1px solid var(--border-light); 
-            font-size: 16px; 
-            background-color: #fafafa;
-            margin: 0;
-            transition: border-color 0.2s;
-            font-family: inherit;
-        }
-
-        input:focus, select:focus, textarea:focus { 
-            border-color: var(--accent); 
-            outline: none; 
-            background-color: var(--white);
-        }
-
+        input[type="text"], select, textarea { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-light); font-size: 16px; background-color: #fafafa; margin: 0; transition: border-color 0.2s; font-family: inherit; }
+        input:focus, select:focus, textarea:focus { border-color: var(--accent); outline: none; background-color: var(--white); }
         textarea { resize: vertical; min-height: 80px; }
 
         .row-2 { display: flex; gap: 12px; }
         .row-2 > div { flex: 1; }
 
-        .btn { 
-            display: block;
-            width: 100%; 
-            padding: 14px; 
-            font-size: 1rem; 
-            font-weight: 600; 
-            text-align: center;
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            margin: 0;
-            transition: opacity 0.2s, transform 0.1s;
-        }
-
+        .btn { display: block; width: 100%; padding: 14px; font-size: 1rem; font-weight: 600; text-align: center; border: none; border-radius: 8px; cursor: pointer; margin: 0; transition: opacity 0.2s, transform 0.1s; }
         .btn:active { transform: scale(0.98); opacity: 0.9; }
-
         .btn-gps { background-color: #e8ecef; color: var(--primary); margin-bottom: 16px; border: 1px solid #ced4da; }
         .btn-foto { background-color: var(--primary); color: var(--white); margin-bottom: 8px; }
         .btn-guardar { background-color: var(--success); color: var(--white); margin-top: 8px; }
         .btn-sync { background-color: var(--accent); color: var(--white); margin-top: 12px; }
 
-        #coords-info { 
-            font-family: monospace;
-            font-size: 12px; 
-            color: #7f8c8d; 
-            text-align: center; 
-            background: #f8f9fa;
-            padding: 8px;
-            border-radius: 6px;
-            margin-bottom: 16px;
-        }
+        #coords-info { font-family: monospace; font-size: 12px; color: #7f8c8d; text-align: center; background: #f8f9fa; padding: 8px; border-radius: 6px; margin-bottom: 16px; }
 
         input[type="file"] { display: none; }
-        
-        /* Contenidor per múltiples imatges */
-        #preview-container { 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 10px; 
-            margin-top: 10px; 
-        }
-        
-        .preview-img-wrapper {
-            position: relative;
-            width: calc(33.333% - 7px); /* 3 columnes amb gap */
-            aspect-ratio: 1;
-        }
-        
-        .preview-img-wrapper img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 1px solid var(--border-light);
-        }
+        #preview-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+        .preview-img-wrapper { position: relative; width: calc(33.333% - 7px); aspect-ratio: 1; }
+        .preview-img-wrapper img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-light); }
+        .btn-remove-foto { position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
-        .btn-remove-foto {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: #e74c3c;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .sync-section {
-            background-color: #ebf5fb;
-            padding: 16px;
-            border-radius: 12px;
-            border: 1px solid #d6eaf8;
-        }
-
+        .sync-section { background-color: #ebf5fb; padding: 16px; border-radius: 12px; border: 1px solid #d6eaf8; }
         .sync-section h3 { margin-top: 0; font-size: 1rem; color: var(--primary); display: flex; justify-content: space-between; }
         
-        .registre { 
-            background: var(--white);
-            border: 1px solid var(--border-light);
-            padding: 10px; 
-            border-radius: 8px;
-            margin-bottom: 10px; 
-            display: flex; 
-            align-items: center; 
-            gap: 12px; 
-        }
-
+        .registre { background: var(--white); border: 1px solid var(--border-light); padding: 12px; border-radius: 8px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .registre-top { display: flex; align-items: center; gap: 12px; }
         .registre .thumblist { display: flex; gap: 5px; flex-shrink: 0; }
         .registre img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; border: 1px solid #ccc; }
         .info-txt { flex: 1; font-size: 13px; color: #555; }
         .info-txt strong { display: block; color: var(--text-main); font-size: 14px; margin-bottom: 3px; }
         .foto-count { font-size: 11px; background: #eee; padding: 2px 6px; border-radius: 10px; display: inline-block; margin-top: 4px; }
-        .leaflet-touch .leaflet-control-layers-toggle,
-        .leaflet-control-layers-toggle {
-            width: 34px !important;
-            height: 34px !important;
-            background-size: 20px 20px !important; /* Fem la icona interior proporcional */
-            background-position: center !important;
-        }
         
-        /* Igualem les vores i l'ombra perquè siguin idèntiques a la teva diana */
-        .leaflet-control-layers {
-            border-radius: 4px !important;
-            border: 2px solid rgba(0,0,0,0.2) !important;
-            box-shadow: 0 1px 5px rgba(0,0,0,0.65) !important;
-            margin-right: 10px !important;
-            margin-top: 10px !important;
-        }
+        /* Botons d'edició per als registres */
+        .registre-accions { display: flex; gap: 8px; border-top: 1px solid #eee; padding-top: 10px; }
+        .btn-sm { flex: 1; padding: 8px; font-size: 13px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; color: white; }
+        .btn-editar { background-color: var(--warning); }
+        .btn-esborrar { background-color: var(--danger); }
     </style>
 </head>
 <body>
 
     <header>
-        <h2>Registre de camp - Allaus</h2>
+        <h2>🏔️ UPAN | Registre d'Allaus</h2>
     </header>
 
     <div class="container">
@@ -270,7 +106,7 @@
             <div id="map"></div>
             <button id="btn-map-gps" class="btn-map-gps" title="Centrar a la meva posició" type="button">🎯</button>
         </div>
-        <p class="map-hint">Toca el mapa per situar l'allau o empra el botó GPS per la ubicació exacta.</p>
+        <p class="map-hint">Toca el mapa per situar l'allau o el botó GPS per la ubicació exacta.</p>
         
         <button id="btn-gps" class="btn btn-gps">📍 Capturar la meva ubicació actual</button>
         <div id="coords-info">🗺️ Cap ubicació seleccionada</div>
@@ -333,71 +169,39 @@
     <script>
         let latSelected = null;
         let lonSelected = null;
-        let fotosArray = []; // Ara és un array per guardar múltiples fotos
+        let fotosArray = []; 
         let marcador;
 
-        // 1. CONFIGURACIÓ DE CAPES DEL MAPA (ICGC Topogràfic i Ortofoto)
-        const icgcTopo = L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/topografic/MON3857NW/{z}/{x}/{y}.png', {
-            maxZoom: 19, attribution: '© ICGC'
-        });
+        // 1. MAPA I CAPES
+        const icgcTopo = L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/topografic/MON3857NW/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© ICGC' });
+        const icgcOrto = L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/orto/MON3857NW/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© ICGC' });
 
-        const icgcOrto = L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/orto/MON3857NW/{z}/{x}/{y}.png', {
-            maxZoom: 19, attribution: '© ICGC'
-        });
-
-        const map = L.map('map', {
-            center: [42.400, 1.800],
-            zoom: 8,
-            layers: [icgcTopo] // Capa per defecte
-        });
-
-        const baseMaps = {
-            "Mapa Topogràfic": icgcTopo,
-            "Ortofoto Vigent": icgcOrto
-        };
-
-        // Afegim el controlador de capes a dalt a la dreta
-        L.control.layers(baseMaps, null, {position: 'topright'}).addTo(map);
+        const map = L.map('map', { center: [42.400, 1.800], zoom: 8, layers: [icgcTopo] });
+        L.control.layers({ "Mapa Topogràfic": icgcTopo, "Ortofoto Vigent": icgcOrto }, null, {position: 'topright'}).addTo(map);
 
         setTimeout(() => { map.invalidateSize(); }, 500);
 
         function updateMarker(lat, lon, label = "Ubicació de l'allau") {
-            latSelected = lat;
-            lonSelected = lon;
+            latSelected = lat; lonSelected = lon;
             document.getElementById('coords-info').innerHTML = `✅ Lat: <strong>${lat.toFixed(5)}</strong>, Lon: <strong>${lon.toFixed(5)}</strong>`;
-            
             if (marcador) map.removeLayer(marcador);
             marcador = L.marker([lat, lon], {draggable: true}).addTo(map).bindPopup(label).openPopup();
-            
             marcador.on('dragend', function(e) {
                 const pos = marcador.getLatLng();
                 updateMarker(pos.lat, pos.lng, "Ubicació ajustada");
             });
         }
 
-        map.on('click', function(e) {
-            updateMarker(e.latlng.lat, e.latlng.lng, "Ubicació marcada manualment");
-        });
+        map.on('click', function(e) { updateMarker(e.latlng.lat, e.latlng.lng, "Ubicació marcada manualment"); });
 
         document.getElementById('btn-map-gps').addEventListener('click', (e) => {
             e.preventDefault();
             const btn = document.getElementById('btn-map-gps');
-            if (!navigator.geolocation) {
-                alert("Geolocalització no suportada pel navegador.");
-                return;
-            }
-
+            if (!navigator.geolocation) { alert("Geolocalització no suportada."); return; }
             btn.innerText = "⏳";
-
             navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    map.setView([pos.coords.latitude, pos.coords.longitude], 14);
-                    btn.innerText = "🎯";
-                },
-                (err) => {
-                    alert("Error obtenint ubicació per centrar el mapa.");
-                    btn.innerText = "🎯";
-                },
+                (pos) => { map.setView([pos.coords.latitude, pos.coords.longitude], 14); btn.innerText = "🎯"; },
+                (err) => { alert("Error obtenint ubicació."); btn.innerText = "🎯"; },
                 { enableHighAccuracy: true, timeout: 10000 }
             );
         });
@@ -406,74 +210,70 @@
             const infoDiv = document.getElementById('coords-info');
             if (!navigator.geolocation) return;
             infoDiv.innerText = "Buscant satèl·lits... 🛰️";
-            
             navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    map.setView([lat, lon], 15);
-                    updateMarker(lat, lon, "La meva posició GPS");
+                (pos) => {
+                    map.setView([pos.coords.latitude, pos.coords.longitude], 15);
+                    updateMarker(pos.coords.latitude, pos.coords.longitude, "La meva posició GPS");
                 },
-                (error) => { infoDiv.innerHTML = `<span style='color:red;'>Error de GPS.</span>`; },
+                (err) => { infoDiv.innerHTML = `<span style='color:red;'>Error de GPS.</span>`; },
                 { enableHighAccuracy: true, timeout: 60000, maximumAge: 0 }
             );
         });
 
-        // 2. GESTIÓ MÚLTIPLES FOTOS
+        // 2. FUNCIÓ PER DIBUIXAR LES FOTOS A LA PANTALLA
+        function renderitzarFotos() {
+            const container = document.getElementById('preview-container');
+            container.innerHTML = ''; // Buidem per redibuixar
+            
+            fotosArray.forEach((base64Data, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'preview-img-wrapper';
+                
+                const img = document.createElement('img');
+                img.src = base64Data;
+                
+                const btnRemove = document.createElement('button');
+                btnRemove.className = 'btn-remove-foto';
+                btnRemove.innerHTML = '×';
+                btnRemove.onclick = function() {
+                    fotosArray.splice(index, 1);
+                    renderitzarFotos(); // Redibuixem si n'esborren una
+                };
+                
+                wrapper.appendChild(img);
+                wrapper.appendChild(btnRemove);
+                container.appendChild(wrapper);
+            });
+        }
+
         document.getElementById('input-foto').addEventListener('change', function(event) {
             const files = event.target.files;
             if (!files.length) return;
 
-            const container = document.getElementById('preview-container');
-
             Array.from(files).forEach(file => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const base64Data = e.target.result;
-                    fotosArray.push(base64Data);
-                    
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'preview-img-wrapper';
-                    
-                    const img = document.createElement('img');
-                    img.src = base64Data;
-                    
-                    const btnRemove = document.createElement('button');
-                    btnRemove.className = 'btn-remove-foto';
-                    btnRemove.innerHTML = '×';
-                    btnRemove.onclick = function() {
-                        const index = fotosArray.indexOf(base64Data);
-                        if (index > -1) {
-                            fotosArray.splice(index, 1);
-                        }
-                        wrapper.remove();
-                    };
-                    
-                    wrapper.appendChild(img);
-                    wrapper.appendChild(btnRemove);
-                    container.appendChild(wrapper);
+                    fotosArray.push(e.target.result);
+                    renderitzarFotos();
                 };
                 reader.readAsDataURL(file);
             });
-            
-            // Buidem l'input per permetre seleccionar la mateixa imatge si la borren i la volen tornar a posar
             this.value = ''; 
         });
 
+        // 3. GUARDAR A LOCALFORAGE
         document.getElementById('btn-guardar').addEventListener('click', async () => {
             const lloc = document.getElementById('input-lloc').value;
             const mida = document.getElementById('input-mida').value;
             const tipus = document.getElementById('input-tipus').value;
             const comentaris = document.getElementById('input-comentaris').value;
 
-            if (latSelected === null) { alert("Si us plau, toca el mapa o usa el GPS per situar l'allau."); return; }
+            if (latSelected === null) { alert("Si us plau, toca el mapa o usa el GPS."); return; }
             if (lloc === "") { alert("Escriu el nom del sector."); return; }
-            if (fotosArray.length === 0) { alert("Si us plau, fes com a mínim una fotografia de l'allau."); return; }
+            if (fotosArray.length === 0) { alert("Si us plau, fes com a mínim una fotografia."); return; }
 
             const novaAllau = {
-                lloc: lloc, mida: mida, tipus: tipus, comentaris: comentaris,
-                lat: latSelected, lon: lonSelected, fotos: fotosArray, // Ara enviem l'array sencer
-                data: new Date().toLocaleString()
+                lloc, mida, tipus, comentaris, lat: latSelected, lon: lonSelected, fotos: fotosArray, data: new Date().toLocaleString()
             };
 
             const dades = await localforage.getItem('allaus_pendents') || [];
@@ -485,16 +285,16 @@
             document.getElementById('input-comentaris').value = "";
             document.getElementById('input-mida').selectedIndex = 0;
             document.getElementById('input-tipus').selectedIndex = 0;
-            latSelected = null; lonSelected = null; 
-            fotosArray = []; // Buidem l'array de fotos
+            latSelected = null; lonSelected = null; fotosArray = [];
             document.getElementById('coords-info').innerText = "🗺️ Cap ubicació seleccionada";
-            document.getElementById('preview-container').innerHTML = ''; // Buidem les previsualitzacions
+            renderitzarFotos();
             if (marcador) map.removeLayer(marcador);
             
             carregarDadesLocals();
             alert("✅ Guardat al telèfon amb èxit!");
         });
 
+        // 4. LLISTA VISUAL AMB BOTONS D'EDITAR I ESBORRAR
         async function carregarDadesLocals() {
             const dades = await localforage.getItem('allaus_pendents') || [];
             const llistaRegistres = document.getElementById('llista-registres');
@@ -504,19 +304,23 @@
             
             dades.forEach((allau, index) => {
                 const comentariTxt = allau.comentaris ? `<br><em style="color:#777">"${allau.comentaris}"</em>` : '';
-                
-                // Mostrar la primera foto com a miniatura principal
                 const imgTag = (allau.fotos && allau.fotos.length > 0) ? `<img src="${allau.fotos[0]}" alt="Miniatura">` : '';
                 const fotoCountInfo = (allau.fotos && allau.fotos.length > 1) ? `<span class="foto-count">📷 ${allau.fotos.length} fotos</span>` : '';
 
                 llistaRegistres.innerHTML += `
                     <div class="registre">
-                        <div class="thumblist">${imgTag}</div>
-                        <div class="info-txt">
-                            <strong>#${index + 1} - ${allau.lloc}</strong>
-                            <span>${allau.mida || '-'} | ${allau.tipus || '-'}</span>
-                            ${fotoCountInfo}
-                            ${comentariTxt}
+                        <div class="registre-top">
+                            <div class="thumblist">${imgTag}</div>
+                            <div class="info-txt">
+                                <strong>#${index + 1} - ${allau.lloc}</strong>
+                                <span>${allau.mida || '-'} | ${allau.tipus || '-'}</span>
+                                ${fotoCountInfo}
+                                ${comentariTxt}
+                            </div>
+                        </div>
+                        <div class="registre-accions">
+                            <button class="btn-sm btn-editar" onclick="editarRegistre(${index})">✏️ Editar</button>
+                            <button class="btn-sm btn-esborrar" onclick="esborrarRegistre(${index})">🗑️ Esborrar</button>
                         </div>
                     </div>
                 `;
@@ -532,6 +336,45 @@
             }
         }
 
+        // --- NOVES FUNCIONS: ESBORRAR I EDITAR ---
+        window.esborrarRegistre = async function(index) {
+            if (!confirm("Segur que vols esborrar aquest registre definitivament?")) return;
+            const dades = await localforage.getItem('allaus_pendents') || [];
+            dades.splice(index, 1); // L'eliminem de l'array
+            await localforage.setItem('allaus_pendents', dades);
+            carregarDadesLocals();
+        };
+
+        window.editarRegistre = async function(index) {
+            const dades = await localforage.getItem('allaus_pendents') || [];
+            const allau = dades[index];
+
+            // 1. Tornem a omplir els camps de text
+            document.getElementById('input-lloc').value = allau.lloc || "";
+            document.getElementById('input-mida').value = allau.mida || "";
+            document.getElementById('input-tipus').value = allau.tipus || "";
+            document.getElementById('input-comentaris').value = allau.comentaris || "";
+
+            // 2. Tornem a posar el marcador al mapa i el centrem
+            if (allau.lat && allau.lon) {
+                map.setView([allau.lat, allau.lon], 15);
+                updateMarker(allau.lat, allau.lon, "Editant: " + allau.lloc);
+            }
+
+            // 3. Recuperem totes les fotos
+            fotosArray = allau.fotos || [];
+            renderitzarFotos();
+
+            // 4. L'esborrem de la llista de pendents (Torna a ser un esborrany)
+            dades.splice(index, 1);
+            await localforage.setItem('allaus_pendents', dades);
+            carregarDadesLocals();
+
+            // 5. Fem scroll cap a dalt de forma suau perquè l'usuari vegi el mapa
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        // 5. SINCRONITZACIÓ
         document.getElementById('btn-sync').addEventListener('click', async () => {
             if (!navigator.onLine) { alert("❌ No tens internet per sincronitzar."); return; }
             const btnSync = document.getElementById('btn-sync');
@@ -541,7 +384,7 @@
                 await localforage.removeItem('allaus_pendents');
                 carregarDadesLocals();
                 btnSync.innerText = "📡 Sincronitzar amb servidor";
-                alert("🚀 Dades enviades correctament a la UPAN!");
+                alert("🚀 Dades enviades correctament!");
             }, 1500);
         });
 
@@ -555,5 +398,3 @@
     </script>
 </body>
 </html>
-
-
