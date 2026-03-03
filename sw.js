@@ -3,7 +3,7 @@ const CACHE_NAME = 'upan-cache-v13';
 const urlsToCache = [
   './',
   './index.html',
-  './app.js', // <--- ARA SÍ! Guardem el fitxer que té la lògica de la web
+  './app.js',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
   'https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js'
